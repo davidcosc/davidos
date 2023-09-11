@@ -12,16 +12,15 @@ loop:                               ; jumping to a label is done using a relativ
 
 print_string:                       ; this function takes one parameter that must be stored in bx before calling => bx should point to the starting address of a string to be printed
   pusha                             ; push all current register values to the stack => save the state of all registers before running this function
+  mov al, [bx]                      ; move the value stored at the address stored in bx to al (basically dereferencing)
   print_next_char:
-    mov al, [bx]                    ; move the value stored at the address stored in bx to al (basically dereferencing)
-    cmp al, 0x0                     ; check if the value is zero, the string terminating character by convention
-    je end_print                    ; if the value is zero, stop printing
-    call print_char                 ; print the value otherwise
+    call print_char
     add bx, 0x1                     ; raise the string address stored in bx by one byte => point to the next char of the string
-    jmp print_next_char             ; repeat
-  end_print:
-    popa                            ; restore all registers to their state prior to running this function
-    ret                             ; pop the return address off the stack and jmp to it / set instruction pointer to it
+    mov al, [bx]
+    cmp al, 0x0                     ; check if the value of the char is zero, the string terminating character by convention
+    jne print_next_char             ; if the value is not zero, continue printing
+  popa                              ; restore all registers to their state prior to running this function
+  ret                               ; pop the return address off the stack and jmp to it / set instruction pointer to it
 
 print_char:                         ; this function takes one parameter that must be stored in al before calling => the value stored in al will be printed to the screen
   pusha
