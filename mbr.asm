@@ -34,13 +34,12 @@ print_hex_nibble:                   ; this funciton takes one nibble (4 bit valu
     sub bl, 0xa                     ; in ASCII Code the starting at e.g. the hex code for 'a' incremented by one gets us the hex code for 'b' which incremented by one again 
     add bl, 'a'                     ; gets us the hex code for 'c' and so on, same goes for digits '0' to '9' => in order to print hex numbers greater 0x9 we reduce the number by 0xa
     mov al, bl                      ; => this gives us the offsets for a to f respectively 0 to 5 which we can use to get the hex code / value for the letters 'a' to 'f' by increasing
-    call print_char                 ; the hex code for the letter 'a' by the offset => e.g to print 0xb we get the hex code of 'a' incremented by one (0xb minus ten)
-    jmp end
+    jmp print_nibble                ; the hex code for the letter 'a' by the offset => e.g to print 0xb we get the hex code of 'a' incremented by one (0xb minus ten)
   digit:
     add bl, '0'                     ; using the same principle we can use an offset as well to calculate hex codes for symbols '0' to '9'
     mov al, bl
+  print_nibble:
     call print_char
-  end:
     popa
     ret
 
