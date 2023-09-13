@@ -4,9 +4,9 @@ main:
   mov sp, bp                        ; start with stack pointer at bp as well                 
   mov bx, start_boot_string
   call print_string                 ; basically call is a jmp that additionally pushes the return address to the stack (address following the one of the current instruction pointer)
-  mov bl, 0xa
+  mov al, 0xa
   call print_hex_nibble
-  mov bl, 0x9
+  mov al, 0x9
   call print_hex_nibble
 
 loop:                               ; jumping to a label is done using a relative jump which means we do not need to know the specific address in memory referenced by the loop label
@@ -26,18 +26,16 @@ print_string:                       ; this function takes one parameter that mus
   popa                              ; restore all registers to their state prior to running this function
   ret                               ; pop the return address off the stack and jmp to it / set instruction pointer to it
 
-print_hex_nibble:                   ; this funciton takes one nibble (4 bit value or byte value with its 4 high bits set to zero) as parameter that must be stored in bl before calling
+print_hex_nibble:                   ; this funciton takes one nibble (4 bit value or byte value with its 4 high bits set to zero) as parameter that must be stored in al before calling
   pusha
-  cmp bl, 9
+  cmp al, 9
   jle digit
   letter:
-    sub bl, 0xa                     ; in ASCII Code the starting at e.g. the hex code for 'a' incremented by one gets us the hex code for 'b' which incremented by one again 
-    add bl, 'a'                     ; gets us the hex code for 'c' and so on, same goes for digits '0' to '9' => in order to print hex numbers greater 0x9 we reduce the number by 0xa
-    mov al, bl                      ; => this gives us the offsets for a to f respectively 0 to 5 which we can use to get the hex code / value for the letters 'a' to 'f' by increasing
-    jmp print_nibble                ; the hex code for the letter 'a' by the offset => e.g to print 0xb we get the hex code of 'a' incremented by one (0xb minus ten)
-  digit:
-    add bl, '0'                     ; using the same principle we can use an offset as well to calculate hex codes for symbols '0' to '9'
-    mov al, bl
+    sub al, 0xa                     ; in ASCII Code the starting at e.g. the hex code for 'a' incremented by one gets us the hex code for 'b' which incremented by one again 
+    add al, 'a'                     ; gets us the hex code for 'c' and so on, same goes for digits '0' to '9' => in order to print hex numbers greater 0x9 we reduce the number by 0xa
+    jmp print_nibble                ; => this gives us the offsets for a to f respectively 0 to 5 which we can use to get the hex code / value for the letters 'a' to 'f' by increasing
+  digit:                            ; the hex code for the letter 'a' by the offset => e.g to print 0xb we get the hex code of 'a' incremented by one (0xb minus ten)
+    add al, '0'                     ; using the same principle we can use an offset as well to calculate hex codes for symbols '0' to '9'
   print_nibble:
     call print_char
     popa
