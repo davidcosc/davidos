@@ -4,10 +4,8 @@ main:
   mov sp, bp                        ; start with stack pointer at bp as well                 
   mov bx, start_boot_string
   call print_string                 ; basically call is a jmp that additionally pushes the return address to the stack (address following the one of the current instruction pointer)
-  mov al, 0xa
-  call print_hex_nibble
-  mov al, 0x9
-  call print_hex_nibble
+  mov dx, 0x9abc
+  call print_hex_double_byte
 
 loop:                               ; jumping to a label is done using a relative jump which means we do not need to know the specific address in memory referenced by the loop label
   jmp loop                          ; offset calculation always begins at the byte immediatley after jmp instruction
@@ -25,6 +23,24 @@ print_string:                       ; this function takes one parameter that mus
     jne print_next_char             ; if the value is not zero, continue printing
   popa                              ; restore all registers to their state prior to running this function
   ret                               ; pop the return address off the stack and jmp to it / set instruction pointer to it
+
+print_hex_double_byte:              ; this function takes a hex number as parameter that must be stored in dx before calling 
+  pusha
+  mov cx, 4                         ; we gonna work on all of the 4 nibbles contained in dx in sequence => we set our initial counter to 4 to keep track on how many nibbles we already worked on
+  mov al, '0'                       ; print '0x' prefix before printing the char converted hex number
+  call print_char
+  mov al, 'x'
+  call print_char
+  next_nibble:
+    mov bl, dh                      ; we will print all 4 nibbles starting with the most significant one (from left to right) e.g. for 0x9abc we start with 9 and work toward c
+    shr bl, 4                       ; since the smallest unit we can copy between registers is a byte e.g 9a, we shift to the right by 4 to isolate the left most nibble e.g. 9
+    mov al, bl                      ; we copy the nibble to al for printing e.g. this results in al containing 0x09
+    call print_hex_nibble
+    shl dx, 4                       ; we now shift dx to the left by 4 in order to remove the nibble we just printed e.g this results in bx containing 0xabc0, making a the left most nibble
+    dec cx                          ; we are finished working on the first nibble, so we reduce our counter by one
+    jnz next_nibble                 ; as long as our counter is not zero, we still have nibbles to work on, so we start working on the next nibble
+  popa
+  ret
 
 print_hex_nibble:                   ; this funciton takes one nibble (4 bit value or byte value with its 4 high bits set to zero) as parameter that must be stored in al before calling
   pusha
@@ -49,7 +65,7 @@ print_char:                         ; this function takes one parameter that mus
   ret
 
 start_boot_string:
-  db 'Booting...', 0                ; quotes are syntactic sugar => db 'Booting...', 0 and db 'B', 'ooting', '...', 0x0 are equivalent
+  db 'Booting...', 0xA, 0xD, 0x0               ; quotes are syntactic sugar => db 'Booting...', 0 and db 'B', 'ooting', '...', 0x0 are equivalent
 
 padding:
   times 510-(padding-main) db 0     ; to make the BIOS recognize this sector as a boot block we must ensure it has a size of exactly 512 bytes
