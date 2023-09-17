@@ -73,7 +73,7 @@ print_char:                                ; this function takes one parameter t
   pusha                                    ; 60
   mov ah, 0xe                              ; => b4 0e => 0xe in ah refers to the scrolling teletype BIOS routine if int 0x10 is called after
   int 0x10                                 ; int imm8 => cd 10 => we are in real mode with the interrupt vector already setup by the BIOS and 0x10 referring to the video interrupt
-  popa                                     ; 60
+  popa                                     ; 61
   ret                                      ; c3
 
 padding:       
