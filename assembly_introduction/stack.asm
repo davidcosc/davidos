@@ -17,8 +17,8 @@ SEGMENT_REGISTER_INIT equ 0x7c0            ; equ just defines a constant value t
 main:
   mov bx, SEGMENT_REGISTER_INIT            ; => bb c0 07 ; we can not set segment registers directly, so we store the desired value in another register and then copy it              
   mov ss, bx                               ; => 8e d3 ; setting the stack segment register (SS) to 0x7c0 results in our stack segment starting at address 0x7c00
-  mov bp, 0x0000                           ; => bd 00 00 ; we point our base pointer (BP) to the beginning of the code segment => since the stack grows downward, we wont override our own code
-  mov sp, bp                               ; => 89 ec ; which is also loaded to per default 0x7c00, also the stack must not grow past 0x500, see ./important_memory_addresses
+  mov bp, 0x0000                           ; => bd 00 00 ; we point our base pointer (BP) to the beginning of the code segment => stack grows downward, we wont override our own code
+  mov sp, bp                               ; => 89 ec ; start with empty stack at 0x7c00; the stack must not grow past 0x500, see ./images/important_memory_addresses.png
   push 'a'                                 ; => 6a 61 ; add the ACII code for 'a' = 61 to the top of the stack
   mov ax, [bp-0x2]                         ; => 8b 46 fe ; move the value at the bp-2 bytes offset address into ax
   call print_char                          ; => e8 02 00 ; if our stack really grows downward we should see a printed to the screen when running the program

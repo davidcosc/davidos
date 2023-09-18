@@ -8,7 +8,7 @@
 ;
 ; info about all x86 details can be found at https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1
 ;
-; for an overview of some important x86 registers, see ./x86_registers.png
+; for an overview of some important x86 registers, see ./images/x86_registers.png
 ;
 ; some terminology:
 ;   r/m => register or memory address
@@ -25,7 +25,7 @@
 ;     opcodes of variants we use:
 ;       mov r/m8,reg8       88 /r
 ;       mov r/m16,reg16     89 /r
-;       mov reg8,r/m8       8a /r
+;       mov reg8,r/m8       8a /rrw
 ;       mov reg16,r/m16     8b /r
 ;       mov reg8,imm8       b0+r ib
 ;       mov reg16,imm16     b8+r iw
