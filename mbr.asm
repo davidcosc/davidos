@@ -2,7 +2,7 @@
 [bits 16]
 SEGMENT_REGISTER_INIT equ 0x7c0
 
-main:    
+main:
   mov bx, SEGMENT_REGISTER_INIT
   mov ds, bx                               ; data segment
   mov ss, bx                               ; stack segment
@@ -11,22 +11,21 @@ main:
   mov sp, bp                               ; start with an empty stack => start at base
   mov bx, welcome_string     
   call print_string
-  mov dx, gdt_end
-  call print_hex_rm
   mov dx, gdt_descriptor
   call print_hex_rm
 
-gdt:                                       ; the global descriptor table (gdt) is a data structure used to define memory segments in x86 32 bit protected mode(pm)
-                                           ; an entry in the table is called segment descriptor(sd) and has a size of 8 bytes
-                                           ; the segment registers are used to point to these table entries => in pm segment registers store the index of a sd
-                                           ; a sd consists of a 32 bit base address that defines where the segment begins in memory,
-                                           ; a 20 bit segment limit which defines the size of the segment and various flags e.g. defining priviledge level or read/write permissions
-                                           ; for some historic reason the base address and limit bits are split into fragments,
-                                           ; for the full sd structure see ./images/segment_descriptor.png
-                                           ; the first sd of the gdt must be an invalid null descriptor with all 8 bytes set to zero
-                                           ; this is done to catch errors when attempting to access an address through a misconfigured segment register 
-                                           ; => if an addressing attempt is made with the null descriptor the cpu raises an error/interrupt
-                                           ; e.g we had ds set to 0x0000 in rm and forgot to point it to an sd before switching to pm
+; the global descriptor table (gdt) is a data structure used to define memory segments in x86 32 bit protected mode(pm)
+; an entry in the table is called segment descriptor(sd) and has a size of 8 bytes
+; the segment registers are used to point to these table entries => in pm segment registers store the index of a sd
+; a sd consists of a 32 bit base address that defines where the segment begins in memory,
+; a 20 bit segment limit which defines the size of the segment and various flags e.g. defining priviledge level or read/write permissions
+; for some historic reason the base address and limit bits are split into fragments,
+; for the full sd structure see ./images/segment_descriptor.png
+; the first sd of the gdt must be an invalid null descriptor with all 8 bytes set to zero
+; this is done to catch errors when attempting to access an address through a misconfigured segment register 
+; => if an addressing attempt is made with the null descriptor the cpu raises an error/interrupt
+; e.g we had ds set to 0x0000 in rm and forgot to point it to an sd before switching to pm
+gdt:
   sd_null:                                 
     times 8 db 0x0                         
   sd_code:                                 
@@ -45,7 +44,7 @@ gdt:                                       ; the global descriptor table (gdt) i
     db 0x0                                 ; base (bits 24-31 of second 4 bytes)
 
 gdt_descriptor:                            ; the cpu needs to know not only about the start address of the gdt, but also its size => we pass it this info using this structure
-    dw gdt_descriptor - gdt - 1            : the size of the gdt, for some reason always less one than the actual size
+    dw gdt_descriptor - gdt - 1            ; the size of the gdt, for some reason always less one than the actual size
     dd gdt                                 ; this is defined as double word, thus 32 bits for usage in protected mode
 
 loop:
