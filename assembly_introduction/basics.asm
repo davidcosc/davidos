@@ -8,6 +8,8 @@
 ;
 ; info about all x86 details can be found at https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1
 ;
+; for an overview of some important x86 registers, see ./x86_registers.png
+;
 ; some terminology:
 ;   r/m => register or memory address
 ;   /r => effective address encoded in up to three parts: a ModR/M byte, an optional SIB byte, and an optional byte, word or doubleword displacement field
@@ -33,6 +35,7 @@
 ;       jmp [SHORT] imm     eb rb
 ;   call — call
 ;     calls a subroutine, by means of pushing the current instruction pointer (IP) and optionally CS as well on the stack, and then jumping to a given address
+;     the stack is just another area in memory, see stack.asm
 ;     opcodes of variants we use:
 ;       call imm            e8 rw
 ;   pusha — push all
@@ -52,14 +55,14 @@
 ;     opcode:
 ;       int imm8            cd ib
 [bits 16]                                  ; tell the assembler, that we want our code assembled in 16 bit mode
-main:
+main:                                      ; a label like "main" or "loop" represents or points to the address/offset of the next instruction directly below it
   mov al, 0x99                             ; mov reg8,imm8 => b0 99
   mov ax, 0xffff                           ; mov reg16,imm16 => b8 ff ff
   mov bl, al                               ; mov r/m8,reg8 => 88 c3
   mov bx, ax                               ; mov r/m16,reg16 => 89 c3 
-  mov bl, [dat]                            ; mov reg8,r/m8 => 8a 1e 16 00
+  mov bl, [dat]                            ; mov reg8,r/m8 => 8a 1e 16 00 ; this is basically dereferencing => getting the value referenced by dat
   mov bl, dat                              ; mov reg8,imm8 => b3 16
-  mov al, 'a'                              ; => b0 61
+  mov al, 'a'                              ; => b0 61 ; quotes signal to assembler to use respective ASCII code
   call print_char                          ; call imm => e8 05 00
   jmp loop                                 ; jmp [SHORT] imm => eb 01
 

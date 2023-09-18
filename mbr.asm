@@ -1,16 +1,14 @@
+; prerequisites: basics.asm, rm-addressing.asm, stack.asm
 [bits 16]
-BOOT_SECTOR_START_ADDRESS equ 0x7c0        ; by convention the bios loads the mbr to address 0x7c00, for the initial memory setup see ./important_memory_addresses.png
-                                           ; in real mode physical addresses are calculated based on the segment address * 16 + offset
-                                           ; e.g. if the assembled programm bb c0 07 8e db 8e d3 8e c3 bd 00, was stored at 0x7c00 with the ds segment address set to 0x07c0
-                                           ; we would get the bd 00 instruction at address ds:0x0009
-                                           ; or 0x7c00(0x07c0 * 16) with an added offset of 9 since bd is the 10th byte(we start counting from zero)
+SEGMENT_REGISTER_INIT equ 0x7c0
+
 main:    
-  mov bx, BOOT_SECTOR_START_ADDRESS        ; we can not set segment registers directly, so we store the in another register and then copy it                 
-  mov ds, bx                               ; we also do not set the code register since it is only ment to change automatically in combination with the 
-  mov ss, bx                               ; instruction pointer when using a far jump
-  mov es, bx                               ; with all segment registers set to 0x7c0 and code loaded to 0x7c00 printing the hex address/offset of our main label should return 0x0000
-  mov bp, 0x0000                           ; our stack segment starts at 0x7c00 so we set the stack and base pointer to address 0x0000 to ensure at the beginning
-  mov sp, bp                               ; since the stack grows downward we wont overlap with our mbr, but the stack must not grow past 0x500, see ./important_memory_addresses                
+  mov bx, SEGMENT_REGISTER_INIT
+  mov ds, bx                               ; data segment
+  mov ss, bx                               ; stack segment
+  mov es, bx                               ; extra segment overlap competely and all start at 0x7c00
+  mov bp, 0x0000                           ; setting up the stack base at 0x7c00
+  mov sp, bp                               ; start with an empty stack => start at base
   mov bx, welcome_string     
   call print_string
   mov dx, global_descriptor_table
@@ -43,11 +41,11 @@ loop:
        
 print_string:                              ; this function takes one parameter that must be stored in bx before calling => bx should point to the starting address of a string
   pusha
-  mov al, [ds:bx]                          ; move the value stored at the address stored in bx to al (basically dereferencing)
+  mov al, [bx]
   print_next_char:       
     call print_char       
     add bx, 0x1                            ; raise the string address stored in bx by one byte => point to the next char of the string
-    mov al, [ds:bx]       
+    mov al, [bx]       
     cmp al, 0x0                            ; check if the value of the char is zero, the string terminating character by convention
     jne print_next_char                    ; if the value is not zero, continue printing
   popa
@@ -55,7 +53,7 @@ print_string:                              ; this function takes one parameter t
        
 print_hex_rm:                              ; this function takes a hex number as parameter that must be stored in dx before calling 
   pusha       
-  mov cx, 4                                ; we gonna work on all of the 4 nibbles contained in dx in sequence => we set our initial counter to 4 to keep track
+  mov cx, 4                                ; we ware going to work on all of the 4 nibbles contained in dx in sequence => we set our initial counter to 4 to keep track
   mov al, '0'                              ; print '0x' prefix before printing the char converted hex number
   call print_char       
   mov al, 'x'       
@@ -94,7 +92,7 @@ print_char:                                ; this function takes one parameter t
   ret
        
 welcome_string:
-  db 'Welcome to Davidos!', 0xA, 0xD, 0x0  ; write bytes to memory, quotes are syntactic sugar => db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent
+  db 'Welcome to Davidos!', 0xA, 0xD, 0x0  ; on a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent
        
 padding:       
   times 510-(padding-main) db 0x0
