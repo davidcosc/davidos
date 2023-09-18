@@ -21,7 +21,8 @@ global_descriptor_table:                   ; the gdt is a data structure used to
                                            ; the segment registers are used to point to these table entries => in pm segment registers store the index of a sd
                                            ; a sd consists of a 32 bit base address that defines where the segment begins in memory,
                                            ; a 20 bit segment limit which defines the size of the segment and various flags e.g. defining priviledge level or read/write permissions
-                                           ; for some historic reason the base address and limit bits are split into fragments, for the full sd structure see ./segment_descriptor.png
+                                           ; for some historic reason the base address and limit bits are split into fragments,
+                                           ; for the full sd structure see ./images/segment_descriptor.png
                                            ; the first sd of the gdt must be an invalid null descriptor with all 8 bytes set to zero
                                            ; this is done to catch errors when attempting to access an address through a misconfigured segment register 
                                            ; => if an addressing attempt is made with the null descriptor the cpu raises an error/interrupt
@@ -29,7 +30,7 @@ global_descriptor_table:                   ; the gdt is a data structure used to
   sd_null:                                 
     times 8 db 0x0                         
   sd_code:                                 
-    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes), for the exact meaning of sd fields and flags see ./segment_descriptor_fields.png
+    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes), for the exact meaning of sd fields and flags see ./images/segment_descriptor_fields.png
     times 2 db 0x0                         ; base (bits 16-31 of first 4 bytes)
     db 0x0                                 ; base (bits 0-7 of second 4 bytes)
     db 10011010b                           ; 1st flags , type flags
