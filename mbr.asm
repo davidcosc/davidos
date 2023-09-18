@@ -11,12 +11,12 @@ main:
   mov sp, bp                               ; start with an empty stack => start at base
   mov bx, welcome_string     
   call print_string
-  mov dx, global_descriptor_table
+  mov dx, gdt_end
   call print_hex_rm
-  mov dx, sd_null
+  mov dx, gdt_descriptor
   call print_hex_rm
 
-global_descriptor_table:                   ; the gdt is a data structure used to define memory segments in x86 32 bit protected mode(pm)
+gdt:                                       ; the global descriptor table (gdt) is a data structure used to define memory segments in x86 32 bit protected mode(pm)
                                            ; an entry in the table is called segment descriptor(sd) and has a size of 8 bytes
                                            ; the segment registers are used to point to these table entries => in pm segment registers store the index of a sd
                                            ; a sd consists of a 32 bit base address that defines where the segment begins in memory,
@@ -30,13 +30,24 @@ global_descriptor_table:                   ; the gdt is a data structure used to
   sd_null:                                 
     times 8 db 0x0                         
   sd_code:                                 
-    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes), for the exact meaning of sd fields and flags see ./images/segment_descriptor_fields.png
+    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes) for the exact meaning of sd fields and flags see ./images/segment_descriptor_fields.png
     times 2 db 0x0                         ; base (bits 16-31 of first 4 bytes)
     db 0x0                                 ; base (bits 0-7 of second 4 bytes)
-    db 10011010b                           ; 1st flags , type flags
-    db 11001111b                           ; 2nd flags , limit (bits 16-19 of second 4 bytes)
+    db 10011010b                           ; P=1, DPL=00, S=1, Type=(Code=1, Conforming=0, Readable=1, Accessed=0) for the exact meaning of type flags see ./images/segment_types.png
+    db 11001111b                           ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes)
     db 0x0                                 ; base (bits 24-31 of second 4 bytes)
-    
+  sd_data:                                 
+    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes)
+    times 2 db 0x0                         ; base (bits 16-31 of first 4 bytes)
+    db 0x0                                 ; base (bits 0-7 of second 4 bytes)
+    db 10010010b                           ; P=1, DPL=00, S=1, Type=(Code=0, Expand down=0, Write=1, Accessed=0)
+    db 11001111b                           ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes)
+    db 0x0                                 ; base (bits 24-31 of second 4 bytes)
+
+gdt_descriptor:                            ; the cpu needs to know not only about the start address of the gdt, but also its size => we pass it this info using this structure
+    dw gdt_descriptor - gdt - 1            : the size of the gdt, for some reason always less one than the actual size
+    dd gdt                                 ; this is defined as double word, thus 32 bits for usage in protected mode
+
 loop:
   jmp loop
        
