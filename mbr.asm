@@ -97,19 +97,33 @@ protected_mode:
     mov ebp, 0x90000
     mov esp, ebp
     mov ecx, welcome_string_pm
-    mov al, [ecx]
     mov edx, 0x1
-    mov ebx, 0x0
-    .loop:
-      call print_char_pm
-      add ecx, 0x1
-      add ebx, 0x1
-      mov al, [ecx]
-      cmp al, 0x0
-      jne .loop
+    call print_string_on_empty_row_pm
     .hang:
       hlt
       jmp .hang 
+
+;------------------------------------------
+; Write a null terminated string of ASCII 
+; characters to the screen, starting at
+; the beginning of the selected row.
+;
+; Arguments:
+;   ECX = Starting address of the string.
+;   EDX = Row to print to.
+print_string_on_empty_row_pm:
+  pusha
+  mov al, [ecx]
+  mov ebx, 0x0
+  .loop:
+    call print_char_pm
+    add ecx, 0x1
+    add ebx, 0x1
+    mov al, [ecx]
+    cmp al, 0x0
+    jne .loop
+  popa
+  ret
 
 ;------------------------------------------
 ; Write an ASCII character to the screen
