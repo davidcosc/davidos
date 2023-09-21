@@ -1,28 +1,27 @@
-; this is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax,
-; important commands and concepts we are gonna use in our actual mbr
-; we can assemble our program e.g. using the command nasm basics.asm -f bin -o basics.bin
-; and run it using qemu-system-x86_64 basics.bin
+; This is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax, important commands
+; and concepts we are going to use in our actual mbr later on.
+; We can assemble our program e.g. using the command nasm basics.asm -f bin -o basics.bin and run it using qemu-system-x86_64 basics.bin.
 ; 
-; instructions in nasm e.g. mov ax, 5 usually follow the structure of <instruction> <target> [, <source>] and translate to so called opcodes
-; opcodes can be used to find our instructions in the generated hex code later e.g. via command od -t x1 -A n basics.bin
+; Instructions in nasm e.g. mov ax, 5 usually follow the structure of <instruction> <target> [, <source>] and translate to so called opcodes.
+; Opcodes can be used to find our instructions in the generated hex code later e.g. via command od -t x1 -A n basics.bin.
 ;
-; info about all x86 details can be found at https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1
+; Info about all x86 details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
 ;
-; for an overview of some important x86 registers, see ./images/x86_registers.png
+; For an overview of some important x86 registers, see "./images/x86_registers.png".
 ;
-; some terminology:
-;   r/m => register or memory address
-;   /r => effective address encoded in up to three parts: a ModR/M byte, an optional SIB byte, and an optional byte, word or doubleword displacement field
-;   +r => add register number e.g. al=0 ax=0 bl=3, ib or iw => hard coded byte or word value
-;   rb, rw => one of the operands to the instruction is an immediate value/hard coded address
-;          => the difference between this value and the address of the end of the instruction is to be encoded as a byte, word (e.g. backwards ff-distance, forward 00+distance)
-;   ib, iw => immediate/hard coded byte or word
+; Some terminology:
+;   r/m => A register or memory address.
+;   /r => Effective address encoded in up to three parts. A ModR/M byte, an optional SIB byte, and an optional byte, word or doubleword displacement field.
+;   +r => Add register number e.g. al=0 ax=0 bl=3.
+;   rb, rw => One of the operands to the instruction is an immediate value/hard coded address. The difference between this value and the address of the end of the
+;             instruction is to be encoded as a byte, word (e.g. backwards ff-distance, forward 00+distance).
+;   ib, iw => An immediate/hard coded byte or word.
 ;
-; for starters we should familiarize us with the following instructions:
+; In particular we should familiarize us with the following instructions:
 ;   mov — move
-;     copies the data item referred to by its second operand (i.e. register contents, memory contents, or a constant value)
-;     into the location referred to by its first operand (i.e. a register or memory)
-;     opcodes of variants we use:
+;     Copies the data item referred to by its second operand (i.e. register contents, memory contents, or a constant value)
+;     into the location referred to by its first operand (i.e. a register or memory).
+;     Opcodes of variants we use:
 ;       mov r/m8,reg8       88 /r
 ;       mov r/m16,reg16     89 /r
 ;       mov reg8,r/m8       8a /rrw
@@ -30,57 +29,60 @@
 ;       mov reg8,imm8       b0+r ib
 ;       mov reg16,imm16     b8+r iw
 ;   jmp — jump
-;     jumps to a given address, the address may be specified as an absolute segment and offset, or as a relative jump within the current segment
-;     opcodes of variants we use:
+;     Jumps to a given address. The address may be specified as an absolute segment and offset or as a relative jump within the current segment.
+;     Opcodes of variants we use:
 ;       jmp [SHORT] imm     eb rb
 ;   call — call
-;     calls a subroutine, by means of pushing the current instruction pointer (IP) and optionally CS as well on the stack, and then jumping to a given address
-;     the stack is just another area in memory, see stack.asm
-;     opcodes of variants we use:
+;     Calls a subroutine by means of pushing the current instruction pointer (IP) and optionally CS as well onto the stack and then jumping to a given address.
+;     The stack is just another area in memory. See "stack.asm".
+;     Opcodes of variants we use:
 ;       call imm            e8 rw
 ;   pusha — push all
-;     pushes in succession, AX, CX, DX, BX, SP, BP, SI and DI on the stack, decrementing the stack pointer by a total of 16
-;     opcode:
+;     Pushes in succession, AX, CX, DX, BX, SP, BP, SI and DI on the stack, decrementing the stack pointer by a total of 16.
+;     Opcode:
 ;       pusha               60
 ;   popa — pop all
-;     pops a word from the stack into each of, successively, DI, SI, BP, nothing (it discards a word from the stack which was a placeholder for SP), BX, DX, CX and AX
-;     opcode:
+;     Pops a word from the stack into each of, successively, DI, SI, BP, nothing (it discards a word from the stack which was a placeholder for SP), BX, DX, CX and AX.
+;     Opcode:
 ;       popa                61
 ;   ret — return
-;     pop IP from the stack and transfer control to the new address
-;     opcode:
+;     Pop IP from the stack and transfer control to the new address.
+;     Opcode:
 ;       ret                 c3
 ;   int — interrupt
-;     causes a software interrupt through a specified vector number from 0 to 255
-;     opcode:
+;     Causes a software interrupt through a specified vector number from 0 to 255.
+;     Opcode:
 ;       int imm8            cd ib
-[bits 16]                                  ; tell the assembler, that we want our code assembled in 16 bit mode
-main:                                      ; a label like "main" or "loop" represents or points to the address/offset of the next instruction directly below it
+[bits 16]                                  ; We tell the assembler, that we want our code assembled in 16 bit mode.
+main:                                      ; A label like "main" represents or points to the address/offset of the next instruction directly below it. Labels must be unique.
   mov al, 0x99                             ; mov reg8,imm8 => b0 99
   mov ax, 0xffff                           ; mov reg16,imm16 => b8 ff ff
   mov bl, al                               ; mov r/m8,reg8 => 88 c3
   mov bx, ax                               ; mov r/m16,reg16 => 89 c3 
-  mov bl, [dat]                            ; mov reg8,r/m8 => 8a 1e 16 00 ; this is basically dereferencing => getting the value referenced by dat
-  mov bl, dat                              ; mov reg8,imm8 => b3 16
-  mov al, 'a'                              ; => b0 61 ; quotes signal to assembler to use respective ASCII code
+  mov bl, [.dat]                            ; mov reg8,r/m8 => 8a 1e 16 00 ; This is like dereferencing. We want to access the value stored at the address of .dat.
+  mov bl, .dat                             ; mov reg8,imm8 => b3 16
+  mov al, 'a'                              ; => b0 61 ; Quotes tell the assembler to use respective ASCII code.
   call print_char                          ; call imm => e8 05 00
-  jmp loop                                 ; jmp [SHORT] imm => eb 01
+  jmp .loop                                ; jmp [SHORT] imm => eb 01
+  .dat:                                    ; A label prefixed with a dot acts as a sublabel. Sublabels only must be unique within the context of their parent label.
+    db 0xff                                ; => ff
+  .loop:
+    jmp .loop                              ; => eb fe
 
-dat:
-  db 0xff                                  ; => ff
-
-loop:
-  jmp loop                                 ; => eb fe
-
-print_char:                                ; this function takes one parameter that must be stored in al before calling => the value stored in al will be printed to the screen
+;------------------------------------------
+; Write an ASCII character to the console.
+;
+; Arguments:
+;   AL = ASCII character.
+;
+print_char:
   pusha                                    ; 60
-  mov ah, 0xe                              ; => b4 0e => 0xe in ah refers to the scrolling teletype BIOS routine if int 0x10 is called after
-  int 0x10                                 ; int imm8 => cd 10 => we are in real mode with the interrupt vector already setup by the BIOS and 0x10 referring to the video interrupt
+  mov ah, 0xe                              ; => b4 0e ; 0xe in AH refers to the scrolling teletype BIOS routine in context of interrupt 0x10.
+  int 0x10                                 ; int imm8 => cd 10 ; We are in real mode with the interrupt vector already setup by the BIOS. 0x10 refers to the video interrupt.
   popa                                     ; 61
   ret                                      ; c3
 
 padding:       
-  times 510-(padding-main) db 0x0          ; to make the BIOS recognize this sector as a boot block we must ensure it has a size of exactly 512 bytes
-                                           ; => if the programm size is smaller than 510 bytes we have to pad the remaining bytes with zeros
-       
-dw 0xaa55                                  ; the last 2 bytes must be the magic number 0xaa55 representing endianness
+  times 510-(padding-main) db 0x0          ; To make the BIOS recognize this sector as a boot block we must ensure it has a size of exactly 512 bytes.
+                                           ; If the programm size is smaller than 510 bytes we have to pad the remaining bytes with zeros.     
+  dw 0xaa55                                ; The last 2 bytes must be the magic number 0xaa55 representing endianness.
