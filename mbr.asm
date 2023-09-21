@@ -63,12 +63,12 @@ configure_video_mode:
 print_string_rm:
   pusha
   mov al, [bx]
-  print_next_char:
+  .loop:
     call print_char_rm
     add bx, 0x1                            ; We raise the string address stored in bx by one to point to the next character of the string.
     mov al, [bx]       
     cmp al, 0x0                            ; We check if the value of the character is zero, the string terminating character by convention.
-    jne print_next_char                    ; If the value is not zero, we continue printing.
+    jne .loop                              ; If the value is not zero, we continue printing.
   popa
   ret       
 
