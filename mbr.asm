@@ -96,25 +96,41 @@ protected_mode:
     mov gs, ax
     mov ebp, 0x90000
     mov esp, ebp
-    mov ebx, 160
-    mov al, 'A'
-    call print_char_pm
+    mov ecx, welcome_string_pm
+    mov al, [ecx]
+    mov edx, 0x1
+    mov ebx, 0x0
+    .loop:
+      call print_char_pm
+      add ecx, 0x1
+      add ebx, 0x1
+      mov al, [ecx]
+      cmp al, 0x0
+      jne .loop
     .hang:
       hlt
       jmp .hang 
 
 ;------------------------------------------
-; Write an ASCII character to the screen.
-;
+; Write an ASCII character to the screen
+; based on selected row and column in text
+; mode. This works by storing the character
+; at address 0xb8000 + 2 * (row * 80 + col).
+; 
 ; Arguments:
 ;   AL = ASCII character.
-;   EBX = Offset defining position to print to.
+;   EDX = Row to print to.
+;   EBX = Column to print to.
 ;
 [bits 32]
 print_char_pm:
   pusha
   mov ah, 0x02                             ; Color light green on black.
-  mov [ebx+0xb8000], ax                    ; Address where video memory starts offset by position to place char at.
+  imul edx, 0x50
+  add edx, ebx
+  imul edx, 0x2
+  add edx, 0xb8000
+  mov [edx], ax                            ; Address where video memory starts offset by position to place char at.
   popa
   ret
 
