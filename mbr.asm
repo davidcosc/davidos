@@ -1,86 +1,135 @@
-; prerequisites: basics.asm, rm-addressing.asm, stack.asm
+; Prerequisites: "basics.asm", "rm-addressing.asm", "stack.asm".
+;
+; The following code sets up a 512 byte boot sector. First off we start in 16 bit real mode and print a welcome message to the screen.
+; We then define a global descriptor table and switch the cpu to 32 bit protected mode. Once we arrive in protected mode,
+; we print another message to the screen.
+;
+; The global descriptor table (GDT) is a data structure used to define memory segments for x86 32 bit protected mode (PM).
+; An entry in the table is called segment descriptor (SD) and has a size of 8 bytes.
+; Segment registers are used to point to these table entries. In protected mode segment registers store the index of a SD within the GDT.
+; A sd consists of a 32 bit base address that defines where the segment begins in memory,
+; a 20 bit segment limit which defines the size of the segment and various flags e.g. defining priviledge level or read/write permissions.
+;
+; For backwards compatibility to old cpus, the base address and limit bits are split into fragments.
+; For the full SD structure, see "./images/segment_descriptor.png".
+;
+; The first SD of the gdt must be an invalid null descriptor with all 8 bytes set to zero.
+; This is done to catch errors when attempting to access an address through a misconfigured segment register. 
+; If an addressing attempt is made with the null descriptor the cpu raises an error/interrupt.
+;
+; For simplicity we only define two more SDs, a code and a data segment descriptor. We also use the so called flat model.
+; All segments will start at address 0x0 and overalp completely.
+;
+; In case you need to debug print some addresses or other hex numbers in real mode, pls add %include "debug_helpers/rm-helpers.asm".
+
+[org 0x7c00]
 [bits 16]
-SEGMENT_REGISTER_INIT equ 0x7c0
-CODE_SD_GDT_OFFSET equ sd_code - gdt
-DATA_SD_GDT_OFFSET equ sd_data - gdt
+real_mode:
+  mov bp, 0x9000  
+  mov sp, bp
+  mov bx, welcome_string_rm     
+  call print_string_rm
+  cli
+  lgdt [gdt_descriptor]
+  mov eax, cr0
+  or eax, 0x1
+  mov cr0, eax
+  jmp 0x8:protected_mode                   ; The index of the code SD followed by the offset for the protected_mode label.                 
+  .hang:
+    hlt                                    ; We tell the cpu to idle from this point on unless any interrupts occur.
+    jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
-main:
-  mov bx, SEGMENT_REGISTER_INIT
-  mov ds, bx                               ; data segment
-  mov ss, bx                               ; stack segment
-  mov es, bx                               ; extra segment overlap competely and all start at 0x7c00
-  mov bp, 0x0000                           ; setting up the stack base at 0x7c00
-  mov sp, bp                               ; start with an empty stack => start at base
-  mov bx, welcome_string     
-  call print_string
-  mov dx, gdt_descriptor
-  call print_hex_rm
-  mov dx, CODE_SD_GDT_OFFSET
-  call print_hex_rm
-  mov dx, DATA_SD_GDT_OFFSET
-  call print_hex_rm
-
-; the global descriptor table (gdt) is a data structure used to define memory segments in x86 32 bit protected mode(pm)
-; an entry in the table is called segment descriptor(sd) and has a size of 8 bytes
-; the segment registers are used to point to these table entries => in pm segment registers store the index of a sd
-; a sd consists of a 32 bit base address that defines where the segment begins in memory,
-; a 20 bit segment limit which defines the size of the segment and various flags e.g. defining priviledge level or read/write permissions
-; for some historic reason the base address and limit bits are split into fragments,
-; for the full sd structure see ./images/segment_descriptor.png
-; the first sd of the gdt must be an invalid null descriptor with all 8 bytes set to zero
-; this is done to catch errors when attempting to access an address through a misconfigured segment register 
-; => if an addressing attempt is made with the null descriptor the cpu raises an error/interrupt
-; e.g we had ds set to 0x0000 in rm and forgot to point it to an sd before switching to pm
-gdt:
-  sd_null:                                 
-    times 8 db 0x0                         
-  sd_code:                                 
-    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes) for the exact meaning of sd fields and flags see ./images/segment_descriptor_fields.png
-    times 2 db 0x0                         ; base (bits 16-31 of first 4 bytes)
-    db 0x0                                 ; base (bits 0-7 of second 4 bytes)
-    db 10011010b                           ; P=1, DPL=00, S=1, Type=(Code=1, Conforming=0, Readable=1, Accessed=0) for the exact meaning of type flags see ./images/segment_types.png
-    db 11001111b                           ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes)
-    db 0x0                                 ; base (bits 24-31 of second 4 bytes)
-  sd_data:                                 
-    times 2 db 0xff                        ; limit (bits 0-15 of first 4 bytes)
-    times 2 db 0x0                         ; base (bits 16-31 of first 4 bytes)
-    db 0x0                                 ; base (bits 0-7 of second 4 bytes)
-    db 10010010b                           ; P=1, DPL=00, S=1, Type=(Code=0, Expand down=0, Write=1, Accessed=0)
-    db 11001111b                           ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes)
-    db 0x0                                 ; base (bits 24-31 of second 4 bytes)
-
-gdt_descriptor:                            ; the cpu needs to know not only about the start address of the gdt, but also its size => we pass it this info using this structure
-    dw gdt_descriptor - gdt - 1            ; the size of the gdt, for some reason always less one than the actual size
-    dd gdt                                 ; this is defined as double word, thus 32 bits for usage in protected mode
-
-loop:
-  jmp loop
-       
-print_string:                              ; this function takes one parameter that must be stored in bx before calling => bx should point to the starting address of a string
+;------------------------------------------
+; Write a zero terminated string of
+; characters to the console.
+;
+; Arguments:
+;   BX = Starting address of the string.
+;
+[bits 16]
+print_string_rm:
   pusha
   mov al, [bx]
-  print_next_char:       
-    call print_char       
-    add bx, 0x1                            ; raise the string address stored in bx by one byte => point to the next char of the string
+  print_next_char:
+    call print_char_rm
+    add bx, 0x1                            ; We raise the string address stored in bx by one to point to the next character of the string.
     mov al, [bx]       
-    cmp al, 0x0                            ; check if the value of the char is zero, the string terminating character by convention
-    jne print_next_char                    ; if the value is not zero, continue printing
+    cmp al, 0x0                            ; We check if the value of the character is zero, the string terminating character by convention.
+    jne print_next_char                    ; If the value is not zero, we continue printing.
   popa
   ret       
 
-%include "debug_helpers/rm-helpers.asm"
-
-print_char:                                ; this function takes one parameter that must be stored in al before calling => the value stored in al will be printed to the screen
+;------------------------------------------
+; Write an ASCII character to the console.
+;
+; Arguments:
+;   AL = ASCII character.
+;
+[bits 16]
+print_char_rm:
   pusha
   mov ah, 0xe
-  int 0x10
+  int 0x10                                 ; Thankfully we can still make use of preset BIOS interrupts in real mode.
   popa
   ret
-       
-welcome_string:
-  db 'Davidos is in 16 bit mode!', 0xA, 0xD, 0x0  ; on a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent
-       
+
+[bits 32]
+protected_mode:
+    mov ax, 0x10                           ; The index of the data SD.
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ebp, 0x90000
+    mov esp, ebp
+    mov ebx, 1440
+    mov al, 'A'
+    call print_char_pm
+    .hang:
+      hlt
+      jmp .hang 
+
+;------------------------------------------
+; Write an ASCII character to the screen.
+;
+; Arguments:
+;   AL = ASCII character.
+;   EBX = Offset defining position to print to.
+;
+[bits 32]
+print_char_pm:
+  pusha
+  mov ah, 0x02                             ; Color light green on black.
+  mov [ebx+0xb8000], ax                    ; Address where video memory starts offset by position to place char at.
+  popa
+  ret
+
+welcome_string_rm:
+  db 'Davidos is in 16 bit mode!', 0x0     ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
+
+gdt:                                       ; Our one and only global descriptor table.
+  .sd_null:
+    db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  .sd_code:
+    db 0xff, 0xff                          ; Limit (bits 0-15 of first 4 bytes). For the exact meaning of SD fields and flags see "./images/segment_descriptor_fields.png".
+    db 0x00, 0x00                          ; Base (bits 16-31 of first 4 bytes).
+    db 0x0                                 ; Base (bits 0-7 of second 4 bytes).
+    db 0b10011010                          ; P=1, DPL=00, S=1, Type=(Code=1, Conforming=0, Readable=1, Accessed=0). For details see "./images/segment_types.png".
+    db 0b11001111                          ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes)
+    db 0x0                                 ; Base (bits 24-31 of second 4 bytes).
+  .sd_data:                                 
+    db 0xff, 0xff                          ; Limit (bits 0-15 of first 4 bytes).
+    db 0x00, 0x00                          ; Base (bits 16-31 of first 4 bytes).
+    db 0x0                                 ; Base (bits 0-7 of second 4 bytes).
+    db 0b10010010                          ; P=1, DPL=00, S=1, Type=(Code=0, Expand down=0, Write=1, Accessed=0).
+    db 0b11001111                          ; G=1, DB=1, unnamed/unused=0, A=0, limit (bits 16-19 of second 4 bytes).
+    db 0x0                                 ; Base (bits 24-31 of second 4 bytes).
+
+gdt_descriptor:                            ; The cpu not only needs to know about the start address of the gdt, but also its size. We pass this info using this structure.
+    dw gdt_descriptor - gdt - 1            ; The size of the gdt. For some reason always less one than the actual size.
+    dd gdt                                 ; This is defined as a double word. Thus 32 bits for usage in protected mode.
+
 padding:       
-  times 510-(padding-main) db 0x0
-       
-dw 0xaa55
+  times 510-(padding-real_mode) db 0x00     
+  dw 0xaa55
