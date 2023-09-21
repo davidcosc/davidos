@@ -25,8 +25,9 @@
 [org 0x7c00]
 [bits 16]
 real_mode:
-  mov bp, 0x9000  
+  mov bp, 0x7c00  
   mov sp, bp
+  call configure_video_mode
   mov bx, welcome_string_rm     
   call print_string_rm
   cli
@@ -40,8 +41,20 @@ real_mode:
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
 ;------------------------------------------
+; Configures basic colour text video mode.
+;
+[bits 16]
+configure_video_mode:
+  pusha
+  mov ah, 0x0                              ; Set video mode.
+  mov al, 0x3                              ; Type of video mode. 0x3 is a 80x25 char colour mode.
+  int 0x10
+  popa
+  ret
+
+;------------------------------------------
 ; Write a zero terminated string of
-; characters to the console.
+; characters to the screen.
 ;
 ; Arguments:
 ;   BX = Starting address of the string.
@@ -60,7 +73,7 @@ print_string_rm:
   ret       
 
 ;------------------------------------------
-; Write an ASCII character to the console.
+; Write an ASCII character to the screen.
 ;
 ; Arguments:
 ;   AL = ASCII character.
@@ -83,7 +96,7 @@ protected_mode:
     mov gs, ax
     mov ebp, 0x90000
     mov esp, ebp
-    mov ebx, 1440
+    mov ebx, 160
     mov al, 'A'
     call print_char_pm
     .hang:
@@ -107,6 +120,9 @@ print_char_pm:
 
 welcome_string_rm:
   db 'Davidos is in 16 bit mode!', 0x0     ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
+
+welcome_string_pm:
+  db 'Davidos is in 32 bit mode!', 0x0
 
 gdt:                                       ; Our one and only global descriptor table.
   .sd_null:
