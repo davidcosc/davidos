@@ -16,12 +16,13 @@
 ; How memory addresses are calculated using segment registers and offset values can best be explained using an example.
 ; By convention the BIOS places our boot sector code at address 0x7c00. See "./images/important_memory_addresses.png".
 ; To do so it also sets certain segment registers. In our case their values default to 0x0000. The beginning of memory.
-; To calculate an absolute memory address in real mode we use the formula: "value of the segment register" * 16 + offset in bytes.
+; To calculate an absolute memory address in real mode we use the formula: "value of the segment register" * 16 + "offset in bytes".
 ; For our example we want to access a data value. Hence we make use of the DS register.
 ; To visualize important values of registers, we use the print_hex_rm function.
-; First we print the value of DS to ensure, the BIOS actually set it to 0x0000. Remember that this is calculated based on the location counter
+; First we print the value of DS to ensure, the BIOS actually set it to 0x0000.
 ; We then print the offset value our "data_value" label was replaced by during assembly.
-; during assembly and not the address where our code was loaded to by BIOS. See "basics.asm" for details about label values.
+; Remember that the label value is calculated based on the location counter during assembly.
+; The address where our code was loaded to by BIOS has no effect on the label value/offset. See "basics.asm" for details about label values.
 ; Next we attempt to print the value referenced by the "data_value" label. 
 ; This does not result in the expected value 0x1111 being printed, but some random value.
 ; To understand what is happening here, we can make use of our formula.
