@@ -30,7 +30,7 @@ clear_screen:
   xor ax, ax                               ; Clear ax.
   xor di, di                               ; Clear di.
   mov cx, 80*25                            ; Set counter register to total screen character size. Using this with rep will repeat the following instruction cx times.
-  rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc ax by 2. We write zero to all 80*25 words in video memory for a black screen.
+  rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc di by 2. We write zero to all 80*25 words in video memory for a black screen.
   popa
   ret
 
