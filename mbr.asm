@@ -19,140 +19,93 @@
 ;
 ; For simplicity we only define two more SDs, a code and a data segment descriptor. We also use the so called flat model.
 ; All segments will start at address 0x0 and overalp completely.
-;
-; In case you need to debug print some addresses or other hex numbers in real mode, pls add %include "debug_helpers/rm-helpers.asm".
 
-[org 0x7c00]
+[org 0x7c00]                               ; The org directive basically tells the location counter to not start counting at zero during assembly but in this case at 0x7c00.
+                                           ; This results in our label values / offests being increased by 0x7c00. This is especially important for the switch to protected mode.
+                                           ; The BIOS sets all segment register to 0x0000 per default. We later on set our data and code segment starting addresses to 0x0 as well
+                                           ; in the gdt. With the org directive a label offset of e.g 0x0020 becomes 0x7c20 and can therefore be resolved in both real and protected
+                                           ; mode. Without the org directive, we could have manipulated the segment registers in real mode to change segment starting addresses to
+                                           ; 0c7c00. With our label offset of 0x0020 we would still end up at the correct address of 0x7c20. After the change to protected mode
+                                           ; however we would end up at address 0x0020, which would crash our program.
 [bits 16]
 real_mode:
-  mov bp, 0x7c00  
+  ; Set up stack to grow down from 0x0000:0x7c00.
+  mov bp, 0x7c00                           
   mov sp, bp
-  call configure_video_mode
-  mov bx, welcome_string_rm     
+  mov [boot_drive_number], dl              ; BIOS passes us the boot driver number in DL. We better save it before we overwrite DL.
+  ; Display welcome message.
+  mov dl, 0x08
+  mov dh, 0x00
+  mov ah, 0x03
+  mov bx, welcome_string_rm
   call print_string_rm
+  ; Load additional sector from disk into memory.
+  mov bx, 0x0000
+  mov es, bx
+  mov bx, 0x9000
+  mov dl, [boot_drive_number]              ; Ensure drive number is stored in dl still / again.
+  mov dh, 0x02                             ; We want to load 2 additional sectors. 512 bytes each per default.
+  call chs_load_sectors                    ; Start the actual loading.
+  ; Display disk load message.
+  add al, '0'                              ; Ascii encode number of successfully loaded sectors.
+  mov byte [disk_load_string.replace], al
+  mov dl, 0x09
+  mov dh, 0x00
+  mov ah, 0x06
+  mov bx, disk_load_string
+  call print_string_rm
+  ; Switch to protected mode.
   cli
   lgdt [gdt_descriptor]
   mov eax, cr0
   or eax, 0x1
   mov cr0, eax
-  jmp 0x8:protected_mode                   ; The index of the code SD followed by the offset for the protected_mode label.                 
+  jmp 0x8:protected_mode                   ; The index of the code SD followed by the offset for the protected_mode label.
+  ; Do nothing.                 
   .hang:
     hlt                                    ; We tell the cpu to idle from this point on unless any interrupts occur.
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
-;------------------------------------------
-; Configures basic colour text video mode.
-;
-[bits 16]
-configure_video_mode:
-  pusha
-  mov ah, 0x0                              ; Set video mode.
-  mov al, 0x3                              ; Type of video mode. 0x3 is a 80x25 char colour mode.
-  int 0x10
-  popa
-  ret
-
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen.
-;
-; Arguments:
-;   BX = Starting address of the string.
-;
-[bits 16]
-print_string_rm:
-  pusha
-  mov al, [bx]
-  .loop:
-    call print_char_rm
-    add bx, 0x1                            ; We raise the string address stored in bx by one to point to the next character of the string.
-    mov al, [bx]       
-    cmp al, 0x0                            ; We check if the value of the character is zero, the string terminating character by convention.
-    jne .loop                              ; If the value is not zero, we continue printing.
-  popa
-  ret       
-
-;------------------------------------------
-; Write an ASCII character to the screen.
-;
-; Arguments:
-;   AL = ASCII character.
-;
-[bits 16]
-print_char_rm:
-  pusha
-  mov ah, 0xe
-  int 0x10                                 ; Thankfully we can still make use of preset BIOS interrupts in real mode.
-  popa
-  ret
-
 [bits 32]
 protected_mode:
-    mov ax, 0x10                           ; The index of the data SD.
+    ; Point segment registers to correct segment descriptors.
+    mov ax, 0x0010                         ; The index of the data SD.
     mov ds, ax
     mov ss, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+    ; Setup the stack.
     mov ebp, 0x90000
     mov esp, ebp
-    mov ecx, welcome_string_pm
-    mov edx, 0x1
-    call print_string_on_empty_row_pm
+    ; Display welcome message.
+    mov dl, 0xa
+    mov dh, 0x0
+    mov ah, 0x02
+    mov ebx, welcome_string_pm
+    call print_string_pm
+    ; Do nothing.
     .hang:
       hlt
-      jmp .hang 
+      jmp .hang
 
-;------------------------------------------
-; Write a null terminated string of ASCII 
-; characters to the screen, starting at
-; the beginning of the selected row.
-;
-; Arguments:
-;   ECX = Starting address of the string.
-;   EDX = Row to print to.
-print_string_on_empty_row_pm:
-  pusha
-  mov al, [ecx]
-  mov ebx, 0x0
-  .loop:
-    call print_char_pm
-    add ecx, 0x1
-    add ebx, 0x1
-    mov al, [ecx]
-    cmp al, 0x0
-    jne .loop
-  popa
-  ret
+%include "./lib/print.asm"
+%include "./lib/disk-load.asm"
 
-;------------------------------------------
-; Write an ASCII character to the screen
-; based on selected row and column in text
-; mode. This works by storing the character
-; at address 0xb8000 + 2 * (row * 80 + col).
-; 
-; Arguments:
-;   AL = ASCII character.
-;   EDX = Row to print to.
-;   EBX = Column to print to.
-;
-[bits 32]
-print_char_pm:
-  pusha
-  mov ah, 0x02                             ; Color light green on black.
-  imul edx, 0x50
-  add edx, ebx
-  imul edx, 0x2
-  add edx, 0xb8000
-  mov [edx], ax                            ; Address where video memory starts offset by position to place char at.
-  popa
-  ret
+boot_drive_number:
+  db 0x0                                   ; We reserve one byte of space to be overwritten with the actual drive number passed to us by BIOS.
 
 welcome_string_rm:
-  db 'Davidos is in 16 bit mode!', 0x0     ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
+  db 'Davidos is in 16 bit mode!', 0x00    ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
+
+disk_load_string:
+  db 'Successfully loaded '
+  .replace:
+    db 0x00
+  db ' additional sectors from disk!', 0x00
 
 welcome_string_pm:
-  db 'Davidos is in 32 bit mode!', 0x0
+  db 'Davidos is in 32 bit mode!', 0x00
 
 gdt:                                       ; Our one and only global descriptor table.
   .sd_null:
@@ -179,3 +132,7 @@ gdt_descriptor:                            ; The cpu not only needs to know abou
 padding:       
   times 510-(padding-real_mode) db 0x00     
   dw 0xaa55
+
+additional_test_sectors:
+  times 512 db '2'
+  times 512 db '3'
