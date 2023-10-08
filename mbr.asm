@@ -34,26 +34,22 @@ real_mode:
   mov sp, bp
   mov [boot_drive_number], dl              ; BIOS passes us the boot driver number in DL. We better save it before we overwrite DL.
   ; Display welcome message.
-  mov dl, 0x08
-  mov dh, 0x00
   mov ah, 0x03
   mov bx, welcome_string_rm
-  call print_string_rm
+  call println_rm
   ; Load additional sector from disk into memory.
   mov bx, 0x0000
   mov es, bx
-  mov bx, 0x9000
+  mov bx, 0x7e00                           ; This is important. We use 0x7e00 to load our pm sector at the address directly following the boot sector. This ensures label offsets work.
   mov dl, [boot_drive_number]              ; Ensure drive number is stored in dl still / again.
   mov dh, 0x02                             ; We want to load 2 additional sectors. 512 bytes each per default.
   call chs_load_sectors                    ; Start the actual loading.
   ; Display disk load message.
   add al, '0'                              ; Ascii encode number of successfully loaded sectors.
   mov byte [disk_load_string.replace], al
-  mov dl, 0x09
-  mov dh, 0x00
   mov ah, 0x06
   mov bx, disk_load_string
-  call print_string_rm
+  call println_rm
   ; Switch to protected mode.
   cli
   lgdt [gdt_descriptor]
@@ -66,30 +62,7 @@ real_mode:
     hlt                                    ; We tell the cpu to idle from this point on unless any interrupts occur.
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
-[bits 32]
-protected_mode:
-    ; Point segment registers to correct segment descriptors.
-    mov ax, 0x0010                         ; The index of the data SD.
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    ; Setup the stack.
-    mov ebp, 0x90000
-    mov esp, ebp
-    ; Display welcome message.
-    mov dl, 0xa
-    mov dh, 0x0
-    mov ah, 0x02
-    mov ebx, welcome_string_pm
-    call print_string_pm
-    ; Do nothing.
-    .hang:
-      hlt
-      jmp .hang
-
-%include "./lib/print.asm"
+%include "./lib/print-driver-rm.asm"
 %include "./lib/disk-load.asm"
 
 boot_drive_number:
@@ -97,15 +70,6 @@ boot_drive_number:
 
 welcome_string_rm:
   db 'Davidos is in 16 bit mode!', 0x00    ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
-
-disk_load_string:
-  db 'Successfully loaded '
-  .replace:
-    db 0x00
-  db ' additional sectors from disk!', 0x00
-
-welcome_string_pm:
-  db 'Davidos is in 32 bit mode!', 0x00
 
 gdt:                                       ; Our one and only global descriptor table.
   .sd_null:
@@ -129,10 +93,38 @@ gdt_descriptor:                            ; The cpu not only needs to know abou
     dw gdt_descriptor - gdt - 1            ; The size of the gdt. For some reason always less one than the actual size.
     dd gdt                                 ; This is defined as a double word. Thus 32 bits for usage in protected mode.
 
-padding:       
-  times 510-(padding-real_mode) db 0x00     
+padding_rm:       
+  times 510-(padding_rm-real_mode) db 0x00     
   dw 0xaa55
 
+[bits 32]
+protected_mode:
+    ; Point segment registers to correct segment descriptors.
+    mov ax, 0x0010                         ; The index of the data SD.
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    ; Setup the stack.
+    mov ebp, 0x90000
+    mov esp, ebp
+    ; Display welcome message.
+    mov ah, 0x02
+    mov ebx, welcome_string_pm
+    call println_pm
+    ; Do nothing.
+    .hang:
+      hlt
+      jmp .hang
+
+%include "./lib/print-driver-pm.asm"
+
+welcome_string_pm:
+  db 'Davidos is in 32 bit mode!', 0x00
+
+padding_pm:       
+  times 512-(padding_pm-protected_mode) db 0x00
+
 additional_test_sectors:
-  times 512 db '2'
   times 512 db '3'

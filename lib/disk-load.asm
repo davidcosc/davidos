@@ -41,3 +41,9 @@ chs_load_sectors:
 
 disk_error_string:
   db 'Error reading from disk!', 0x0
+
+disk_load_string:
+  db 'Successfully loaded '
+  .replace:
+    db 0x00
+  db ' additional sectors from disk!', 0x00
