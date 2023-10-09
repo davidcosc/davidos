@@ -1,20 +1,19 @@
 ; This module contains functions for loading disk sectors into memory.
 ; It depends on the "./print.asm" module in order to print error messages to the screen.
 
-;------------------------------------------
-; Read data sectors from boot drive and
-; load them to 0x0000(ES):(BX).
-;
-; Arguments:
-;   DL = Boot drive number.
-;   DH = Number of sectors to read.
-;   ES:BX = Address to load sectors to in memory.
-;
-; Returns:
-;   AL = Number of actual sectors loaded.
-;
 [bits 16]
 chs_load_sectors:
+  ; Read data sectors from boot drive and
+  ; load them to 0x0000(ES):(BX).
+  ;
+  ; Arguments:
+  ;   DL = Boot drive number.
+  ;   DH = Number of sectors to read.
+  ;   ES:BX = Address to load sectors to in memory.
+  ;
+  ; Returns:
+  ;   AL = Number of actual sectors loaded.
+  ;
   push cx
   push dx
   mov ah, 0x02                             ; BIOS read sectors from drive.

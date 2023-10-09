@@ -60,6 +60,7 @@
 ;     Causes a software interrupt through a specified vector number from 0 to 255.
 ;     Opcode:
 ;       int imm8            cd ib
+
 [bits 16]                                  ; We tell the assembler, that we want our code assembled in 16 bit mode.
 main:                                      ; A label like "main" represents or points to the address/offset of the next instruction directly below it. Labels must be unique.
   mov al, 0x99                             ; mov reg8,imm8 => b0 99
@@ -76,13 +77,13 @@ main:                                      ; A label like "main" represents or p
   .loop:
     jmp .loop                              ; => eb fe
 
-;------------------------------------------
-; Write an ASCII character to the screen.
-;
-; Arguments:
-;   AL = ASCII character.
-;
+[bits 16]
 print_char:
+  ; Write an ASCII character to the screen.
+  ;
+  ; Arguments:
+  ;   AL = ASCII character.
+  ;
   pusha                                    ; 60
   mov ah, 0xe                              ; => b4 0e ; 0xe in AH refers to the scrolling teletype BIOS routine in context of interrupt 0x10.
   int 0x10                                 ; int imm8 => cd 10 ; We are in real mode with the interrupt vector already setup by the BIOS. 0x10 refers to the video interrupt.

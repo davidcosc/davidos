@@ -1,24 +1,23 @@
 ; This module contains functions that allow for printing strings, characters and hexadecimal numbers to the screen. 
 ; This module contains 32 bit protected mode functions. For their 16 bit counterparts see "./print-driver-rm.asm".
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode. Start writing at the specified
-; column and row based on 80x25 text mode.
-;
-; Arguments:
-;   EBX = Starting address of the string.
-;   DL = Selected row. One of 0 to 24.
-;   DH = Selected column. One of 0 to 79.
-;   AH = Color to print.
-;
-; Returns:
-;   DI = Text buffer offset after printing
-;        the string. Numbers of characters
-;        offset times 2.
 [bits 32]
 print_string_row_column_pm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at the specified
+  ; column and row based on 80x25 text mode.
+  ;
+  ; Arguments:
+  ;   EBX = Starting address of the string.
+  ;   DL = Selected row. One of 0 to 24.
+  ;   DH = Selected column. One of 0 to 79.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after printing
+  ;        the string. Numbers of characters
+  ;        offset times 2.
   push ebx
   push dx
   push ax
@@ -29,19 +28,18 @@ print_string_row_column_pm:
   pop ebx
   ret
 
-;------------------------------------------
-; Calculate the text buffer address plus
-; offset based on selected row and column
-; for 80x25 VGA text mode.
-;
-; Arguments:
-;   DL = Selected row. One of 0 to 24.
-;   DH = Selected column. One of 0 to 79.
-;
-; Returns:
-;   EDI = Text buffer address plus offset.
 [bits 32]
 calculate_text_buffer_offset_pm:
+  ; Calculate the text buffer address plus
+  ; offset based on selected row and column
+  ; for 80x25 VGA text mode.
+  ;
+  ; Arguments:
+  ;   DL = Selected row. One of 0 to 24.
+  ;   DH = Selected column. One of 0 to 79.
+  ;
+  ; Returns:
+  ;   EDI = Text buffer address plus offset.
   push dx
   push eax
   push ebx
@@ -60,21 +58,20 @@ calculate_text_buffer_offset_pm:
   pop dx
   ret
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode. Start writing at the current
-; cursor position.
-;
-; Arguments:
-;   EBX = Starting address of the string.
-;   AH = Color to print.
-;
-; Returns:
-;   EDI = Text buffer address plus offset
-;         of next line after printing. 
 [bits 32]
 println_pm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at the current
+  ; cursor position.
+  ;
+  ; Arguments:
+  ;   EBX = Starting address of the string.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   EDI = Text buffer address plus offset
+  ;         of next line after printing.
   push ebx
   push ax
   call get_cursor_text_buffer_offset_pm
@@ -84,25 +81,23 @@ println_pm:
   pop ebx
   ret
 
-;------------------------------------------
-; Get VGA text buffer cursor position.
-;
-; Returns:
-;   EDI = Cursor text buffer offset.
 [bits 32]
 get_cursor_text_buffer_offset_pm:
+  ; Get VGA text buffer cursor position.
+  ;
+  ; Returns:
+  ;   EDI = Cursor text buffer offset.
    call get_cursor_pm
    imul edi, 0x2                           ; Numbers of characters offset times 2. Each char in text buffer is stored in 2 bytes.
    add edi, 0xb8000                        ; Add text buffer address to offset to get text buffer address the cursor relates to.
    ret
 
-;------------------------------------------
-; Get VGA text mode cursor position.
-;
-; Returns:
-;   EDI = Cursor offset.
 [bits 32]
 get_cursor_pm:
+  ; Get VGA text mode cursor position.
+  ;
+  ; Returns:
+  ;   EDI = Cursor offset.
   push eax
   push edx
   xor edi, edi                             ; Clear EDI.
@@ -124,21 +119,20 @@ get_cursor_pm:
   pop eax
   ret
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode.
-;
-; Arguments:
-;   EBX = Starting address of the string.
-;   EDI = Text buffer address plus offset.
-;   AH = Color to print.
-;
-; Returns:
-;   EDI = Text buffer address plus offset
-;         after printing to the string.
 [bits 32]
 print_string_pm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode.
+  ;
+  ; Arguments:
+  ;   EBX = Starting address of the string.
+  ;   EDI = Text buffer address plus offset.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   EDI = Text buffer address plus offset
+  ;         after printing to the string.
   push ebx
   mov al, [ebx]                            ; First string character value.
   .loop:
@@ -151,32 +145,30 @@ print_string_pm:
   pop ebx
   ret
 
-;------------------------------------------
-; Write a colored ASCII character
-; to the screen in VGA 80x25 text mode.
-;
-; Arguments:
-;   AH = Color.
-;   AL = ASCII character.
-;   EDI = Text buffer address plus offset.
-;
-; Returns:
-;   EDI = Initial DI incremented by two.
 [bits 32]
 print_char_pm:
+  ; Write a colored ASCII character
+  ; to the screen in VGA 80x25 text mode.
+  ;
+  ; Arguments:
+  ;   AH = Color.
+  ;   AL = ASCII character.
+  ;   EDI = Text buffer address plus offset.
+  ;
+  ; Returns:
+  ;   EDI = Initial DI incremented by two.
   stosw                                    ; Stosw is equivalent to mov [edi], ax and then inc edi by 2.
   ret
 
-;------------------------------------------
-; Get the next row offset based on cursor.
-;
-; Arguments:
-;   EDI = Text buffer offset cursor position.
-;
-; Returns:
-;   EDX = Next row text buffer offset.
 [bits 32]
 move_cursor_next_row_pm:
+  ; Get the next row offset based on cursor.
+  ;
+  ; Arguments:
+  ;   EDI = Text buffer offset cursor position.
+  ;
+  ; Returns:
+  ;   EDX = Next row text buffer offset.
   push eax
   push ebx
   mov eax, edi
@@ -196,13 +188,12 @@ move_cursor_next_row_pm:
   pop eax
   ret
 
-;------------------------------------------
-; Set VGA text mode cursor position.
-;
-; Arguments:
-;   EDI = Text buffer address plus offset.
 [bits 32]
 set_cursor_pm:
+  ; Set VGA text mode cursor position.
+  ;
+  ; Arguments:
+  ;   EDI = Text buffer address plus offset.
   push eax
   push ebx
   push edx

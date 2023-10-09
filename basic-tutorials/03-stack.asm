@@ -15,6 +15,7 @@
 ;   - We can not push and pop single bytes to the stack, but e.g. in 16 bit mode only 16 bit chunks at a time.
 ;
 ; For our initial boot sector the stack has already been defined by the BIOS. We can define it manually as well as seen below.
+
 [bits 16]
 SEGMENT_REGISTER_INIT equ 0x7c0            ; Equ just defines a constant value that is going to be replaced by the assembler where used. It kind of functions like a c #define.
 
@@ -29,13 +30,13 @@ main:
   .loop:
     jmp .loop
 
-;------------------------------------------
-; Write an ASCII character to the console.
-;
-; Arguments:
-;   AL = ASCII character.
-;
+[bits 16]
 print_char:
+  ; Write an ASCII character to the console.
+  ;
+  ; Arguments:
+  ;   AL = ASCII character.
+  ;
   pusha
   mov ah, 0xe
   int 0x10

@@ -35,6 +35,7 @@
 ; One special case to mention regarding segments is the code segment definied by the code segment register (CS) and the instruction pointer (IP).
 ; It is special, because we do not manually set the value of CS:IP. In fact we can not do so, because this could completely mess up what instructions the
 ; cpu should load next. CS:IP can only be set together by far jumping.
+
 [bits 16]
 main:
   mov dx, ds                               ; If set by BIOS correctly, 
@@ -53,13 +54,13 @@ main:
 data_value:                                ; Label value 0x0020.
   dw 0x1111
 
-;------------------------------------------
-; Write a 16 bit hex number to the screen.
-;
-; Arguments:
-;   DX = Hex number.
-;
+[bits 16]
 print_hex_rm:
+  ; Write a 16 bit hex number to the screen.
+  ;
+  ; Arguments:
+  ;   DX = Hex number.
+  ;
   pusha
   mov cx, 4                                ; We work on all 4 nibbles in sequence. We set our initial counter to 4 to keep track of the nibbles we already worked on.
   mov al, '0'                              ; Print '0x' hex number prefix.
@@ -77,21 +78,21 @@ print_hex_rm:
   popa
   ret
 
-;------------------------------------------
-; Write a nibble (or byte value with its
-; 4 high bits set to zero) to the screen.
-; It will be output in hexadecimal format.
-;
-; In ASCII Code symbols are stored in a
-; fixed order. E.g. the hex code for 'a'
-; incremented by one gets us the hex code
-; for 'b' and so on. Same goes for symbols
-; 0 to 9.
-;
-; Arguments:
-;   AL = Nibble.
-;
+[bits 16]
 print_hex_nibble:
+  ; Write a nibble (or byte value with its
+  ; 4 high bits set to zero) to the screen.
+  ; It will be output in hexadecimal format.
+  ;
+  ; In ASCII Code symbols are stored in a
+  ; fixed order. E.g. the hex code for 'a'
+  ; incremented by one gets us the hex code
+  ; for 'b' and so on. Same goes for symbols
+  ; 0 to 9.
+  ;
+  ; Arguments:
+  ;   AL = Nibble.
+  ;
   pusha
   cmp al, 9                                ; If the nibble number is smaller than nine,
   jle digit                                ; we want to print a digit between 0 and 9.
@@ -106,13 +107,13 @@ print_hex_nibble:
     popa
     ret
 
-;------------------------------------------
-; Write an ASCII character to the screen.
-;
-; Arguments:
-;   AL = ASCII character.
-;
+[bits 16]
 print_char:
+  ; Write an ASCII character to the screen.
+  ;
+  ; Arguments:
+  ;   AL = ASCII character.
+  ;
   pusha
   mov ah, 0xe
   int 0x10

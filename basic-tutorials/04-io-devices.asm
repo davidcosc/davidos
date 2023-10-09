@@ -23,12 +23,12 @@ main:
   mov dh, 0x0                              ; Select column one.
   mov ah, 0x02                             ; Select color green on black.
   mov bx, hello_world_string               ; Set starting address of the string to print.
-  call print_string_rm
+  call print_string_row_column_rm
   ; Do nothing
   .loop:
     jmp .loop
 
-%include "../lib/print.asm"
+%include "../lib/print-driver-rm.asm"
 
 hello_world_string:
   db 'Hello, world!', 0x0

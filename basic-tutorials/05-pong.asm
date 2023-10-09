@@ -20,12 +20,11 @@ main:
     hlt
     jmp game_loop
 
-;------------------------------------------
-; Clears the screen. Only works in 80x25
-; video text mode.
-;
 [bits 16]
 clear_screen:
+  ; Clears the screen. Only works in 80x25
+  ; video text mode.
+  ;
   pusha
   xor ax, ax                               ; Clear ax.
   xor di, di                               ; Clear di.
@@ -34,14 +33,13 @@ clear_screen:
   popa
   ret
 
-;------------------------------------------
-; Draw a player bar to the screen.
-;
-; Arguments:
-;   DI = Player left side position.
-;
 [bits 16]
 draw_player:
+  ; Draw a player bar to the screen.
+  ;
+  ; Arguments:
+  ;   DI = Player left side position.
+  ;
   pusha
   imul di, 0x2
   add di, LAST_ROW
@@ -52,7 +50,6 @@ draw_player:
     loop .loop
   popa
   ret
-
 
 player_x_pos:
   db 0x27

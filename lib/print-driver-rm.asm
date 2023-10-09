@@ -16,24 +16,23 @@
 ; We will not include functions to set up the video mode, since it is rather complicated without BIOS.
 ; An example of how to set video mode without interrupt can be found at "http://bos.asmhackers.net/docs/vga_without_bios/snippet_5/vga.php".
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode. Start writing at the specified
-; column and row based on 80x25 text mode.
-;
-; Arguments:
-;   BX = Starting address of the string.
-;   DL = Selected row. One of 0 to 24.
-;   DH = Selected column. One of 0 to 79.
-;   AH = Color to print.
-;
-; Returns:
-;   DI = Text buffer offset after printing
-;        the string. Numbers of characters
-;        offset times 2.
 [bits 16]
 print_string_row_column_rm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at the specified
+  ; column and row based on 80x25 text mode.
+  ;
+  ; Arguments:
+  ;   BX = Starting address of the string.
+  ;   DL = Selected row. One of 0 to 24.
+  ;   DH = Selected column. One of 0 to 79.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after printing
+  ;        the string. Numbers of characters
+  ;        offset times 2.
   push bx
   push dx
   push ax
@@ -44,19 +43,18 @@ print_string_row_column_rm:
   pop bx
   ret
 
-;------------------------------------------
-; Calculate the text buffer offset
-; based on selected row and column
-; for 80x25 VGA text mode.
-;
-; Arguments:
-;   DL = Selected row. One of 0 to 24.
-;   DH = Selected column. One of 0 to 79.
-;
-; Returns:
-;   DI = Text buffer offset.
 [bits 16]
 calculate_text_buffer_offset_rm:
+  ; Calculate the text buffer offset
+  ; based on selected row and column
+  ; for 80x25 VGA text mode.
+  ;
+  ; Arguments:
+  ;   DL = Selected row. One of 0 to 24.
+  ;   DH = Selected column. One of 0 to 79.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset.
   push dx
   push ax
   push bx
@@ -73,22 +71,21 @@ calculate_text_buffer_offset_rm:
   pop dx
   ret
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode. Start writing at the current
-; cursor position.
-;
-; Arguments:
-;   BX = Starting address of the string.
-;   AH = Color to print.
-;
-; Returns:
-;   DI = Text buffer offset after printing
-;        the string. Numbers of characters
-;        offset times 2.
 [bits 16]
 println_rm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at the current
+  ; cursor position.
+  ;
+  ; Arguments:
+  ;   BX = Starting address of the string.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after printing
+  ;        the string. Numbers of characters
+  ;        offset times 2.
   push bx
   push ax
   call get_cursor_text_buffer_offset_rm
@@ -98,25 +95,23 @@ println_rm:
   pop bx
   ret
 
-;------------------------------------------
-; Get VGA text buffer cursor position.
-;
-; Returns:
-;   DI = Cursor text buffer offset.
 [bits 16]
 get_cursor_text_buffer_offset_rm:
-   call get_cursor_rm
-   imul di, 0x2                           ; Each character in the text buffer is stored in 2 bytes.
-   ret
+  ; Get VGA text buffer cursor position.
+  ;
+  ; Returns:
+  ;   DI = Cursor text buffer offset.
+  call get_cursor_rm
+  imul di, 0x2                           ; Each character in the text buffer is stored in 2 bytes.
+  ret
 
-;------------------------------------------
-; Get VGA text mode cursor position.
-;
-; Returns:
-;   DI = Cursor offset.
-;
 [bits 16]
 get_cursor_rm:
+  ; Get VGA text mode cursor position.
+  ;
+  ; Returns:
+  ;   DI = Cursor offset.
+  ;
   push ax
   push dx
   xor di, di                               ; Clear DI.
@@ -138,23 +133,22 @@ get_cursor_rm:
   pop ax
 	ret
 
-;------------------------------------------
-; Write a zero terminated string of
-; characters to the screen in VGA text
-; mode. Start writing at text buffer
-; position DI based on 80x25 text mode.
-;
-; Arguments:
-;   BX = Starting address of the string.
-;   DI = Text buffer offset.
-;   AH = Color to print.
-;
-; Returns:
-;   DI = Text buffer offset after printing
-;        the string. Numbers of characters
-;        offset times 2.
 [bits 16]
 print_string_rm:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at text buffer
+  ; position DI based on 80x25 text mode.
+  ;
+  ; Arguments:
+  ;   BX = Starting address of the string.
+  ;   DI = Text buffer offset.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after printing
+  ;        the string. Numbers of characters
+  ;        offset times 2.
   push bx
   push ax
   call set_up_text_buffer_rm
@@ -168,51 +162,48 @@ print_string_rm:
   call set_cursor_rm
   pop ax
   pop bx
-  ret       
+  ret
 
-;------------------------------------------
-; Set up extra segment to start at 0xb8000.
-; This is the starting address the VGA
-; devices text buffer is mapped to.
-;
-; Returns:
-;   ES = Offset for text buffer start addr.
 [bits 16]
 set_up_text_buffer_rm:
+  ; Set up extra segment to start at 0xb8000.
+  ; This is the starting address the VGA
+  ; devices text buffer is mapped to.
+  ;
+  ; Returns:
+  ;   ES = Offset for text buffer start addr.
   push ax
   mov ax, 0xb800
   mov es, ax
   pop ax
   ret
 
-;------------------------------------------
-; Write a colored ASCII character
-; to the screen in VGA 80x25 text mode.
-; Requires set_up_text_buffer_rm.
-;
-; Arguments:
-;   AH = Color.
-;   AL = ASCII character.
-;   DI = Text buffer offset. 2 per char.
-;
-; Returns:
-;   DI = Initial DI incremented by two.
 [bits 16]
 print_char_rm:
+  ; Write a colored ASCII character
+  ; to the screen in VGA 80x25 text mode.
+  ; Requires set_up_text_buffer_rm.
+  ;
+  ; Arguments:
+  ;   AH = Color.
+  ;   AL = ASCII character.
+  ;   DI = Text buffer offset. 2 per char.
+  ;
+  ; Returns:
+  ;   DI = Initial DI incremented by two.
   stosw                                    ; Stosw is equivalent to mov [es:di], ax and then inc di by 2.
   ret
 
-;------------------------------------------
-; Get the next row offset based on cursor.
-;
-; Arguments:
-;   DI = Text buffer cursor position.
-;
-; Returns:
-;   DI = Next row text buffer offset.
-;
 [bits 16]
 move_cursor_next_row_rm:
+  ; Get the next row offset based on cursor.
+  ;
+  ; Arguments:
+  ;   DI = Text buffer cursor position.
+  ;
+  ; Returns:
+  ;   DI = Next row text buffer offset.
+  ;
   push ax
   push bx
   mov ax, di
@@ -230,14 +221,13 @@ move_cursor_next_row_rm:
   pop ax
 	ret
 
-;------------------------------------------
-; Set VGA text mode cursor position.
-;
-; Arguments:
-;   DI = Text buffer offset.
-;
 [bits 16]
 set_cursor_rm:
+  ; Set VGA text mode cursor position.
+  ;
+  ; Arguments:
+  ;   DI = Text buffer offset.
+  ;
   push ax
   push bx
   push dx
