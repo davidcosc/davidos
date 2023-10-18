@@ -10,7 +10,7 @@
 ; The VGA devices port mapped I/O registers can be accessed using the special in and out instructions.
 ; In contrast to the text buffer, ports are mapped to a different address space. The in and out instructions work with
 ; this separate address space.
-; For more details see "../images/memory-mapped-io.png".
+; For more details see "../images/memory_mapped_io.png".
 ;
 ; In order to use this module we must set VGA text mode 80x25 beforehand. Usually this mode has already been set up for us by BIOS.
 ; We will not include functions to set up the video mode, since it is rather complicated without BIOS.
