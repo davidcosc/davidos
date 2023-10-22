@@ -1,12 +1,12 @@
 ; This is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax, important commands
-; and concepts we are going to use in our actual mbr later on.
+; and concepts we are going to use in our actual os later on.
 ; We can assemble our program e.g. using the command nasm basics.asm -f bin -o basics.bin and run it using qemu-system-x86_64 basics.bin.
 ; 
-; A line of nasm code is structured "label:    instruction operands        ; comment", with the label and comment being optional.
+; A line of nasm code is structured "label: instruction operands ; comment", with the label and comment being optional.
 ; Instructions in nasm e.g. mov ax, 5 usually follow the structure of <instruction> <target-operand> [, <source-operand>] and translate to so called opcodes.
 ; Opcodes can be used to find our instructions in the generated hex code later e.g. via command od -t x1 -A n basics.bin.
 ;
-; Info about all x86 details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
+; Info about all x86 nasm details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
 ;
 ; For an overview of some important x86 registers, see "./images/x86_registers.png".
 ;
