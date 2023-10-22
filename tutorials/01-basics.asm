@@ -67,7 +67,7 @@ main:                                      ; A label like "main" represents or p
   mov ax, 0xffff                           ; mov reg16,imm16 => b8 ff ff
   mov bl, al                               ; mov r/m8,reg8 => 88 c3
   mov bx, ax                               ; mov r/m16,reg16 => 89 c3 
-  mov bl, [.dat]                            ; mov reg8,r/m8 => 8a 1e 16 00 ; This is like dereferencing. We want to access the value stored at the address of .dat.
+  mov bl, [.dat]                           ; mov reg8,r/m8 => 8a 1e 16 00 ; This is like dereferencing. We want to access the value stored at the address of .dat.
   mov bl, .dat                             ; mov reg8,imm8 => b3 16
   mov al, 'a'                              ; => b0 61 ; Quotes tell the assembler to use respective ASCII code.
   call print_char                          ; call imm => e8 05 00

@@ -17,6 +17,8 @@ The very first program our computer runs after a reboot is the BIOS firmware. At
 - detect and configure other hardware like buses, pic, disk, usb or display devices etc.
 - indentify bootable devices and transfer control to the bootsector by loading it to the specific address 0x7c00. This is where our own code/program will start.
 
+The bootsector is a 512 byte program stored at the very beginning of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. Take a look at "./tutorials/basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented in detail to explain the basics of x86 nasm assembly and common commands we will use a lot throughout the repository.
+
 
 ## Hardware
 
