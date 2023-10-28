@@ -21,6 +21,12 @@ main:
   ; Set up stack to grow down from 0x0000:0x7c00.
   mov bp, 0x7c00                           
   mov sp, bp
+  ; Display hello world.
+  mov dl, 0x9                              ; Select row nine.
+  mov dh, 0x0                              ; Select column one.
+  mov ah, 0x02                             ; Select color green on black.
+  mov bx, hello_world_string               ; Set starting address of the string to print.
+  call print_string_row_column_rm
   ; Reinitialize pic with new irq offset.
   mov bh, 0x10                             ; Master pic interrupt offset.
   mov bl, 0x70                             ; Slave pic interrupt offset.
@@ -31,12 +37,6 @@ main:
   ; Set up keyboard isr in ivt
   mov bx, 0x44
   call install_keyboard_driver
-  ; Display hello world.
-  mov dl, 0x9                              ; Select row nine.
-  mov dh, 0x0                              ; Select column one.
-  mov ah, 0x02                             ; Select color green on black.
-  mov bx, hello_world_string               ; Set starting address of the string to print.
-  call print_string_row_column_rm
   ; Repeatedly print most recently pressed key
   xor dx, dx
   .loop:
