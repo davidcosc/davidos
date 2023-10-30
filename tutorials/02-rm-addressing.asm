@@ -1,4 +1,4 @@
-; Prerequisites: "basics.asm".
+; Prerequisites: "./01-basics.asm".
 ;
 ; To understand addressing in 16 bit real mode, specifically how absolute addresses in memory are calculated, we must understand a concept called segmentation.
 ;

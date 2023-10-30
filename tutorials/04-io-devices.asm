@@ -1,4 +1,4 @@
-; Prerequisites: "basics.asm", "rm-addressing.asm", "stack.asm".
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm".
 ;
 ; In this module we want to showcase how the cpu and I/O devices interact with each other.
 ; We will do so by going over two device drivers in detail.

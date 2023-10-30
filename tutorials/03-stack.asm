@@ -1,4 +1,4 @@
-; Prerequisites: "basics.asm", "rm-addressing.asm".
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm".
 ;
 ; One of the problems of low level programming is, that the cpu has a limited number of registers and therefore limited space for temporarily storing variables, values etc.
 ; The stack is a simple solution to this problem. It is a memory area defined by a starting address pointed to by a so called base pointer (BP) and another stack pointer (SP)

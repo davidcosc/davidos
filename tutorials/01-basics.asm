@@ -41,7 +41,7 @@
 ;       jmp [SHORT] imm     eb rb
 ;   call — call
 ;     Calls a subroutine by means of pushing the current instruction pointer (IP) and optionally CS as well onto the stack and then jumping to a given address.
-;     The stack is just another area in memory. See "stack.asm".
+;     The stack is just another area in memory. We will cover the stack in detail later on. We will provide a separate tutorial inside "./03-stack.asm".
 ;     Opcodes of variants we use:
 ;       call imm            e8 rw
 ;   pusha — push all
@@ -57,7 +57,11 @@
 ;     Opcode:
 ;       ret                 c3
 ;   int — interrupt
-;     Causes a software interrupt through a specified vector number from 0 to 255.
+;     Causes a software interrupt through a specified vector number from 0 to 255. Interrupts are a mechanism that allow the CPU temporarily to halt what it is doing and
+;     run some other, higher-priority instructions before returning to the original task. An interrupt could be raised either by a software instruction (e.g. int 0x10) or by some
+;     hardware device that requires high-priority action (e.g. to read some incoming data from a network device). We will cover interrupts in detail later on. However, this explanation
+;     should suffice for the example below.
+;     
 ;     Opcode:
 ;       int imm8            cd ib
 
