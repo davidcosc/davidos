@@ -21,7 +21,7 @@ The very first program our computer runs after a reboot is the basic input/outpu
 - detect and configure other hardware like the bus, pic, disk, usb or display devices amongst others.
 - indentify bootable devices and transfer control to the bootsector by loading it to the specific address 0x7c00. This is where our own code/program will start.
 
-We will first concern ourselves with the bootsector. It is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some basics of x86 nasm assembly (just as much as we need for our purposes) and common commands we will use a lot throughout this project. In case you have never heard about registers before, pls read the "CPU registers" section below first.
+We will first concern ourselves with the bootsector. It is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some basics of x86 nasm assembly (just as much as we need for our purposes) and common commands we will use a lot throughout this project. In case you have never heard about registers before, pls read the "3.1.1 CPU registers" section below first.
 
 
 ## 3 Hardware
@@ -57,7 +57,14 @@ Throughout this project, we will learn how to use these registers extensively. N
 Since we are bound to 16 bit instructions, we only have 16 bits that can be used for addressing. We can only address up to 2^16 bytes or 64kB of RAM. Even for a lot of old systems, that is not enough space to work with. In order to make more memory accessible, Intel thought of a workaround. The concept they came up with is called segmentation. It is a certain way of combining the values of two registers, one of wich is a so called segment register, such that we can generate a larger address to work with. Note, that the maximum number of bits we can use for addressing in this way is 20. We can not simply use two 16 bit registers for addressing. The 8086 CPU only had a maximum of 20 physical address lines/pins we could use. As a result we can address up to a maximum of 1 MB of RAM. For an example and more details of addressing using segmentation in real mode, take a look at "./tutorials/02-rm-addressing.asm".
 
 
-#### 3.1.3 CPU and the stack
+#### 3.1.3 Address spaces
+
+As you might have noticed, in the previous section we only talked about addressing in conjunction with RAM or memory. In case of the x86 processors however, we have to talk about address spaces as well. In contrast to other CPU manufacturers, Intel treats peripheral devices and memory differently.
+Memory and peripheral devices each get their own address space. This means, that the same address pool can be present in both spaces. Depending on the space used, an address may refer to different things. The space used for peripheral devices is commonly called I/O space, whereas the space used for RAM is called memory space. The x86 CPU has separate read and write electrical lines/pins for accessing I/O space. These are called I/O ports. There are special CPU instructions IN and OUT to access these lines. This means any address references that do not use IN or OUT refer to memory space.
+This will get important in later sections.
+
+
+#### 3.1.4 CPU and the stack
 
 Although the CPU has many registers, it is still quite limited in the amount of space it provides for storing variables. We often need more storage space than will fit into these registers. We could make use of main memory to accomplish this. However this would require us to provide specific addresses when reading and writing. This is quite inconvenient. We do not really care where temporary data is stored, but we want to retrieve and store it easily.
 
@@ -71,4 +78,9 @@ Important to note is, that the stack expands/grows downwards from the base point
 
 
 ### 3.2 Main memory (RAM)
+
+As we have learned in section "2 The boot process", one of the first tasks of the BIOS is to initialize main memory, so called random access memory (RAM). As to how this is accomplished, I am not sure. As far as I know, BIOS code is still confidential. It seems likely however, that some I/O port addresses are used to configure or query the memory controller. This might as well be plain wrong though. The important part is, that once the RAM has been initialized, we get access to the (almost) entire memory address range. For example if we plugged in 8 GB of RAM before starting our PC, we would now be able to address (almost) all of it using the address lines on our CPU ment for accessing the memory address space.
+
+
+#### 3.2.1 Memory mapped I/O
 
