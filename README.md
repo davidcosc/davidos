@@ -28,9 +28,9 @@ We will first concern ourselves with the bootsector. It is a program, that is st
 
 When it comes to hardware, we will concern ourselves with:
 - the x86 CPU
-- random access memory (RAM).
-- a video graphics array (VGA) compatible screen
-- the 8259 programmable interrupt controller (PIC)
+- main memory aka. random access memory (RAM).
+- a video graphics array (VGA) compatible video display
+- an 8259 compatible programmable interrupt controller (PIC)
 - a cylinder head sector addressable (CHS) disk drive
 
 
@@ -88,4 +88,24 @@ The reason we can not use all of the initialized memory is due to some address r
 
 At some point manufacturers concluded, that separating peripheral device and memory device interaction was not always the best idea. This led to manufacturers mapping the on board memory and registers of some I/O devices to specific address ranges withing the memory address space. If the CPU executes an instruciont i.e. MOV against one of these address ranges, it will not access the address in memory, but the mapped I/O device instead. We have already come across an example of this, when we mentioned the CPU expecting the BIOS to be present at a specific address after restarting our PC. This address in memory space refers to the ROM device, where the BIOS is initially stored. It actually can not refer to RAM, since RAM has not even been initialized yet. Another great example of this would be the video device. Its VGA video memory buffer is also mapped to memory address space. I.e. the text buffer starts at address 0xb8000.
 
-In conclusion, there are different types of devices, that can be accessed either via I/O ports only, memory only or a combination of the two. For an example of using memory mapped I/O, take a look at "./tutorials/04-io-devices.asm". However, we recommend reading the following sections about some other devices, we are going to interact with within this example beforehand.
+In conclusion, there are different types of devices, that can be accessed via combination of I/O ports and memory mapping or one of the two. For an example of using memory mapped I/O, take a look at "./tutorials/04-io-devices.asm". However, we recommend reading the following sections about some other devices, we are going to interact with within this example beforehand.
+
+### 3.3 VGA compatible video display
+
+Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
+It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-io-devices.asm" we use VGA to print text to the screen.
+
+VGA uses a combination of memory mapped I/O and port mapped I/O to set up video buffers and configure video modes.
+
+Standard graphics modes:
+- 640 × 480 in 16 colors or monochrome
+- 640 × 350 or 640 × 200 in 16 colors or monochrome
+- 320 × 200 in 256 colors (Mode 13h)
+- 320 × 200 in 4 or 16 colors
+
+Standard text modes:
+- 80 × 25, rendered with a 9 × 16 pixel font, with an effective resolution of 720 × 400[21]
+- 40 × 25, with a 9 × 16 font, with an effective resolution of 360 × 400
+- 80 × 43 or 80 × 50, with an 8 × 8 font grid, with an effective resolution of 640 × 344 or 640 × 400 pixels
+
+### 3.4 8259 compatible PIC
