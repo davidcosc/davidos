@@ -80,8 +80,7 @@ Important to note is, that the stack expands/grows downwards from the base point
 
 ### 3.2 Main memory (RAM)
 
-As we have learned in section "2 The boot process", one of the first tasks of the BIOS is to initialize main memory, so called random access memory (RAM). As to how this is accomplished, I am not sure. As far as I know, BIOS code is still confidential. It seems likely however, that some I/O port addresses are used to configure or query the memory controller. This might as well be plain wrong though. The important part is, that once the RAM has been initialized, we get access to the (almost) entire memory address range. For example if we plugged in 8 GB of RAM before starting our PC, we would now be able to address (almost) all of it using the address lines on our CPU ment for accessing the memory address space.
-
+As we have learned in section "2 The boot process", one of the first tasks of the BIOS is to initialize main memory, so called random access memory (RAM). As to how this is accomplished, I am not sure. As far as I know, BIOS code is still confidential. It seems likely however, that some I/O port addresses are used to configure or query the memory controller. This might as well be plain wrong though. The important part is, that once the RAM has been initialized, we get access to the (almost) entire memory address range. For example if we plugged in 8 GB of RAM before starting our PC, we would now be able to address (almost) all of it.
 
 #### 3.2.1 Memory mapped I/O
 
