@@ -93,7 +93,7 @@ In conclusion, there are different types of devices, that can be accessed via co
 ### 3.3 VGA compatible video display
 
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
-It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-io-devices.asm" we use VGA to print text to the screen.
+It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-io-devices.asm" we use VGA text mode to write to the screen.
 
 VGA uses a combination of memory mapped I/O and port mapped I/O to set up video buffers and configure video modes.
 
