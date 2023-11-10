@@ -1,17 +1,17 @@
 # Davidos
 
-This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system with some basic I/O drivers that allows us to run different mini games like a custom pong implementation. It is by no means a complete explanation or tutorial on everything that goes on in detail. Rather, it focuses on a subset of concepts I found interesting and wanted to learn more about at the time of writing.  
+This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system with some basic I/O drivers that allows us to run different mini games like a custom pong implementation. It is by no means a complete explanation or tutorial on everything that goes on in detail. Rather, it focuses on a subset of concepts worth learning about in regards to the example.
 
-Topics addressed will include different hardware components and how to interact with them, assembly basics and some information about the boot process and BIOS. We will look at how to display text by writing to the screen, take user input from a keyboard and how to read from a disk. Along the way we will learn about important concecpts like addressing, the memory map, device I/O and interrupts. 
+We will look at how to display text by writing to the screen, take user input from a keyboard and how to read from a disk. Along the way we will learn about different hardware components and how to interact with them. We will cover basics about the boot process, BIOS, addressing, the memory map, device I/O and interrupts.
 
 
 ## 1 Interacting with the system
 
-At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations and also I/O operations to interact with all the other devices of our system. To interact with any part of the system, the CPU needs to know where this part of the system is located. A location might be a certain place on the motherboard, where a device we would like to interact with is connected to, for example the USB port our keyboard is connected to.
+At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations and also I/O operations to interact with all the other devices in our system. To interact with any part of the system, the CPU needs to know where this part of the system is located. A location might be a certain place on the motherboard, a device is connected to. An example of this would be the USB port our keyboard is connected to.
 
-A location is defined by an address. An address is a binary number of a certain size. The size of the number/address might depend on the type and mode of the CPU we are currently using or the device you want to interact with. For example the maximum address number could be limited by the actual number of physical address lines/pins of the CPU. We will go into more detail about addressing later on.
+A location is defined by an address. An address is a binary number of a certain size. The size of the number/address might depend on the type and mode of the CPU we are currently using or the device you want to interact with. For example the maximum address number could be limited by the actual number of physical address lines/pins of the CPU. We will cover specific concepts regarding addressing in sections 3.1.2, 3.1.3 and 3.2.1.
 
-A device might be assigned many addresses in order to interact with or refer to different parts of that device. A good example of this is the memory device. Each byte of memory that can be accessed is referenced by an individual, specific address/number.  
+A device might be assigned many addresses in order to interact with or refer to different parts of that device. A good example of this is the memory device. Each byte of memory that can be accessed is referenced by an individual, specific address/number.
 
 
 ## 2 The boot process
