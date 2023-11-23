@@ -1,22 +1,13 @@
 ; This is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax, important commands
 ; and concepts we are going to use in our actual os later on.
 ; We can assemble our program e.g. using the command nasm basics.asm -f bin -o basics.bin and run it using qemu-system-x86_64 basics.bin.
-; 
-; A line of nasm code is structured "label: instruction operands ; comment", with the label and comment being optional.
-; Instructions in nasm e.g. mov ax, 5 usually follow the structure of <instruction> <target-operand> [, <source-operand>] and translate to so called opcodes.
-; Opcodes can be used to find our instructions in the generated hex code later e.g. via command od -t x1 -A n basics.bin.
+; Using the command od -t x1 -A n basics.bin we can view the generated opcodes with arguments in hexadecimal form.
 ;
 ; Info about all x86 nasm details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
 ;
 ; For an overview of some important x86 registers, see "./images/x86_registers.png".
 ;
 ; Some terminology:
-;   Labels:
-;     In order to assemble a code file, nasm uses a so called location counter which works like an instruction counter used by a cpu. When starting the assembly it
-;     has a value of zero. Every assembled byte raises the counter by one. Once the location counter reaches a label, it is replaces by the current location counter value.
-;     This means if we reach a label "my_label:" during assembly and all previous code has been assembled to 2 bytes, the label will be replaced by the number three.
-;     The label therefore references the next instruction following the label / to be assembled. The value the label is getting replaced by is an immediate value.
-;
 ;   r/m => A register or memory address.
 ;   /r => Effective address encoded in up to three parts. A ModR/M byte, an optional SIB byte, and an optional byte, word or doubleword displacement field.
 ;   +r => Add register number e.g. al=0 ax=0 bl=3.

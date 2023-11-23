@@ -1,8 +1,30 @@
 # Davidos
 
-This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system with some basic I/O drivers that allows us to run different mini games like a custom pong implementation. It is by no means a complete explanation or tutorial on everything that goes on in detail. Rather, it focuses on a subset of concepts worth learning about in regards to the example.
+This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system with some basic I/O drivers that allows us to run different mini games like a custom pong implementation. It is by no means a complete explanation or tutorial on everything that goes on in detail. Rather, it focuses on a subset of concepts that fit the example and are worth learning about.
 
-We will look at how to display text by writing to the screen, take user input from a keyboard and how to read from a disk. Along the way we will learn about different hardware components and how to interact with them. We will cover basics about the boot process, BIOS, addressing, the memory map, device I/O and interrupts.
+We will cover how to read from a disk, display text on a screen, take user input from a keyboard, create a file system and load and run our games. Along the way we will learn about different hardware components and how to write drivers to interact with them. We will take a look at the boot process and the BIOS. We will find out how to address different parts of the system, how to use memory and handle device I/O.
+
+
+## Instruction Operands
+
+In order to make our computer do anything, we need a way to tell it what we want it to do for us. This is done by supplying our computer with a list of instructions that tell it exactly what to do. In binary form, instructions consist of so called opcodes and their optional arguments. Since these binary instructions are really hard to read for a human, some really nice people built tools called interpreters for us, that allow us to write instructions symbolically in a more readably form using assembly language. Specifically we are going to use NASM assembly in our case.
+
+Instructions using NASM assembly have the following format:
+```
+label: mnemonic argument1, argument2, argument3
+```
+where:
+- A label is an identifier which is followed by a colon. Labels are optional. A label translates to the offset of the following instruction. The offset is based on the location counter. If not specified otherwise the location counter is set to zero at the beginning of assembly. Each assembled byte increases the location counter by one. I.e. if previously assembled instructions translate to 5 bytes of opcodes and arguments, the following label would translate to an offset of 6.
+- A mnemonic is a reserved name for a class of instruction opcodes which have the same function.
+- The operands argument1, argument2 and argument3 are optional. When present they take the form of either literals or identifiers for data items. Literals are also called immediate values. Operand identifiers are either reserved names of cpu registers or are assumed to be assigned to data items declared in another part of the program. I.e. a label referencing some data. When two operands are present, the right operand is the source and the left operand is the destination.
+
+For example:
+```
+load_result_to_reg: mov eax, result
+```
+In this example load_result_to_reg is a label and mov is the mnemonic identifier of an opcode. The destination operand ist eax and the source operand is result. The source operands value in this case is the address represented by the result label.
+
+Although we are going to use a lot of different instructions throughout this project, we are not going to come close to using all of them. We are simply going to us as many as we need to fullfill our purposes. Explanations on the instructions used will be provided in the code comments of either the tutorials or the actual os.
 
 
 ## 1 Interacting with the system
