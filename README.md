@@ -5,7 +5,7 @@ This repository aims at showcasing how a computer works under the hood when you 
 We will cover how to read from a disk, display text on a screen, take user input from a keyboard, create a file system and load and run our games. Along the way we will learn about different hardware components and how to write drivers to interact with them. We will take a look at the boot process and the BIOS. We will find out how to address different parts of the system, how to use memory and handle device I/O.
 
 
-## Instruction Operands
+## 0 Instruction Operands
 
 In order to make our computer do anything, we need a way to tell it what we want it to do for us. This is done by supplying our computer with a list of instructions that tell it exactly what to do. In binary form, instructions consist of so called opcodes and their optional arguments. Since these binary instructions are really hard to read for a human, some really nice people built tools called interpreters for us, that allow us to write instructions symbolically in a more readably form using assembly language. Specifically we are going to use NASM assembly in our case.
 
