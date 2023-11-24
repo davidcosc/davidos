@@ -1,7 +1,5 @@
 ; This is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax, important commands
 ; and concepts we are going to use in our actual os later on.
-; We can assemble our program e.g. using the command nasm basics.asm -f bin -o basics.bin and run it using qemu-system-x86_64 basics.bin.
-; Using the command od -t x1 -A n basics.bin we can view the generated opcodes with arguments in hexadecimal form.
 ;
 ; Info about all x86 nasm details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
 ;

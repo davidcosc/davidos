@@ -1,8 +1,8 @@
 # Davidos
 
-This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system with some basic I/O drivers that allows us to run different mini games like a custom pong implementation. It is by no means a complete explanation or tutorial on everything that goes on in detail. Rather, it focuses on a subset of concepts that fit the example and are worth learning about.
+This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system that allows us to run different custom mini games. It is by no means a complete explanation or tutorial on everything that goes on in detail. It rather focuses on a subset of important concepts worth learning about.
 
-We will cover how to read from a disk, display text on a screen, take user input from a keyboard, create a file system and load and run our games. Along the way we will learn about different hardware components and how to write drivers to interact with them. We will take a look at the boot process and the BIOS. We will find out how to address different parts of the system, how to use memory and handle device I/O.
+An operating system is system software that manages computer hardware and software resources. It provides common services for computer programs and acts as an interface for the user. Not only will it enable us to load our mini games from a disk, but also provide functions for displaying text on a screen, taking user input from a keyboard and running our games. Along the way we will learn about different hardware components and how to write drivers to interact with them. We will take a look at the boot process and the BIOS. We will find out how to address different parts of the system, how to use memory and handle device I/O.
 
 
 ## 0 Instruction Operands
@@ -22,7 +22,7 @@ For example:
 ```
 load_result_to_reg: mov eax, result
 ```
-In this example load_result_to_reg is a label and mov is the mnemonic identifier of an opcode. The destination operand ist eax and the source operand is result. The source operands value in this case is the address represented by the result label.
+In this example load_result_to_reg is a label and mov is the mnemonic identifier of an opcode. The destination operand ist eax and the source operand is result. The destination operand is the eax register of the cpu. The source operand value in this case is the address represented by the result label.
 
 Although we are going to use a lot of different instructions throughout this project, we are not going to come close to using all of them. We are simply going to us as many as we need to fullfill our purposes. Explanations on the instructions used will be provided in the code comments of either the tutorials or the actual os.
 
@@ -31,7 +31,7 @@ Although we are going to use a lot of different instructions throughout this pro
 
 At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations and also I/O operations to interact with all the other devices in our system. To interact with any part of the system, the CPU needs to know where this part of the system is located. A location might be a certain place on the motherboard, a device is connected to. An example of this would be the USB port our keyboard is connected to.
 
-A location is defined by an address. An address is a binary number of a certain size. The size of the number/address might depend on the type and mode of the CPU we are currently using or the device you want to interact with. For example the maximum address number could be limited by the actual number of physical address lines/pins of the CPU. We will cover specific concepts regarding addressing in sections 3.1.2, 3.1.3 and 3.2.1.
+In order to identify a location we refer to an address specific to this location. An address is a binary number of a certain size. The size of the number/address might depend on the type and mode of the CPU we are currently using or the device you want to interact with. For example the maximum address number could be limited by the actual number of physical address lines/pins of the CPU. We will cover specific concepts regarding addressing in sections 3.1.2, 3.1.3 and 3.2.1.
 
 A device might be assigned many addresses in order to interact with or refer to different parts of that device. A good example of this is the memory device. Each byte of memory that can be accessed is referenced by an individual, specific address/number.
 
@@ -43,8 +43,20 @@ The very first program our computer runs after a reboot is the basic input/outpu
 - detect and configure other hardware like the bus, pic, disk, usb or display devices amongst others.
 - indentify bootable devices and transfer control to the bootsector by loading it to the specific address 0x7c00. This is where our own code/program will start.
 
-We will first concern ourselves with the bootsector. It is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some basics of x86 nasm assembly (just as much as we need for our purposes) and common commands we will use a lot throughout this project. In case you have never heard about registers before, pls read the "3.1.1 CPU registers" section below first.
+We will first concern ourselves with the bootsector. It is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. We will use qemu to run our bootsector. Qemu is a hardware emulater, that allows us to emulate an entire x86_64 system. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some basics of x86 nasm assembly (just as much as we need for our purposes) and common commands we will use a lot throughout this project. In case you have never heard about registers before, pls read the "3.1.1 CPU registers" section below first.
 
+Inside the tutorials directory we can assemble our bootsector using the command:
+```
+nasm 01-basics.asm -f bin -o 01-basics.bin
+```
+We run it using:
+```
+qemu-system-x86_64 01-basics.bin
+```
+To view the actual opcodes and arguments generated in hexadecimal form, we can use:
+```
+od -t x1 -A n 01-basics.bin
+```
 
 ## 3 Hardware
 
