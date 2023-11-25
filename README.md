@@ -57,6 +57,7 @@ To view the actual opcodes and arguments generated in hexadecimal form, we can u
 ```
 od -t x1 -A n 01-basics.bin
 ```
+Alternatively we can use the provided Makefile configuration to build and run either our operating system or the tutorials.
 
 ## 3 Hardware
 

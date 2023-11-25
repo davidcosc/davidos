@@ -62,8 +62,8 @@ real_mode:
     hlt                                    ; We tell the cpu to idle from this point on unless any interrupts occur.
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
-%include "./lib/print-driver-rm.asm"
-%include "./lib/disk-load.asm"
+%include "../lib/print-driver-rm.asm"
+%include "../lib/disk-load.asm"
 
 boot_drive_number:
   db 0x0                                   ; We reserve one byte of space to be overwritten with the actual drive number passed to us by BIOS.
@@ -118,7 +118,7 @@ protected_mode:
       hlt
       jmp .hang
 
-%include "./lib/print-driver-pm.asm"
+%include "../lib/print-driver-pm.asm"
 
 welcome_string_pm:
   db 'Davidos is in 32 bit mode!', 0x00
