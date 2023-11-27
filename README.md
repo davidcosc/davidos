@@ -61,12 +61,38 @@ Alternatively we can use the provided Makefile configuration to build and run ei
 
 ## 3 Hardware
 
-When it comes to hardware, we will concern ourselves with:
-- the x86 CPU
-- main memory aka. random access memory (RAM).
-- a video graphics array (VGA) compatible video display
-- an 8259 compatible programmable interrupt controller (PIC)
-- a cylinder head sector addressable (CHS) disk drive
+In order to manage the computer hardware, our operating system must be aware of the kind of hardware available to it. Tailoring an operating system to each and every specific device combination built into different computers would be impossible. Thankfully over time hardware manufacturers developed certain standards for different types of devices. This way an operating system that conforms to these standards can use a multitude of compatible devices, which is way more practical. However, this does not mean, that an operating system can simply run on all hardware systems. Core aspects of an operating system might differ based on hardware. For example without the existence of compilers and higher level programming languages, we would have to rewrite our entire operating system for different CPU architectures, since the instruction sets would be totally different. Another example would be storage devices. An operating system that uses modern drivers for accessing SSDs via PCI express could not access hard drives that only support SATA. Often devices that adopted a new standard over time, still support legacy standards or access mechanisms in order to be compatible to older system software. We might not want to change or upgrade the operating system, just because we switched to a newever hardware version.
+
+The fact remains, that our operating system must be somewhat aware of the hardware it is running on, in order to function correctly. Similar to the BIOS an operating system implements a hardware detection mechanism for this purpose. This usually involves querying the available bus devices starting from the main bus for all devices connected to them. Depending on the bus type this might be done in different ways. In older legacy systems that used the ISA bus, standard addresses were defined for different devices. These standardized I/O ports had to be known by system developers to access these devices. See section 3.1.3 for more details on I/O ports. Our qemu emulated system comes with an ISA bridge. For simplicity we are going to use standardized I/O ports instead of a discovery mechanism to interface with our devices.
+
+Apart of the x86-64 CPU and RAM, qemu emulates the following hardware for us:
+- i440FX host PCI bridge
+- PIIX3 (Chipset) PCI to ISA bridge with:
+    - IDE/ATA controller
+    - two 8237 DMA controllers
+    - 8254 PIT
+    - two 8259 PICs
+    - PCI to ISA bus bridge
+    - USB 1.0 controller
+    - support for external I/O APIC
+- Cirrus CLGD 5446 PCI VGA card or dummy VGA card with Bochs VESA extensions (hardware level, including all non standard modes).
+- PS/2 mouse and keyboard
+- 2 PCI IDE interfaces with hard disk and CD-ROM support
+- Floppy disk
+- PCI and ISA network adapters
+- Serial ports
+- IPMI BMC, either and internal or external one
+- Creative SoundBlaster 16 sound card
+- ENSONIQ AudioPCI ES1370 sound card
+- Intel 82801AA AC97 Audio compatible sound card
+- Intel HD Audio Controller and HDA codec
+- Adlib (OPL2) - Yamaha YM3812 compatible chip
+- Gravis Ultrasound GF1 sound card
+- CS4231A compatible sound card
+- PC speaker
+- PCI UHCI, OHCI, EHCI or XHCI USB controller and a virtual USB-1.1 hub
+
+We will focus on the Cirrus CLGD 5446 PCI VGA card for displaying things on the screen, the 8259 PIC for handling interrupts i.e. from our keyboard, the keyboard itself for user input and the ATA controller for reading from the disk.
 
 
 ### 3.1 CPU
@@ -97,7 +123,7 @@ Since we are bound to 16 bit instructions, we only have 16 bits that can be used
 As you might have noticed, in the previous section we only talked about addressing in the context of RAM or memory. In case of the x86 processors however, we have to talk about address spaces as well. Some CPU manufacturers including Intel treat peripheral devices and memory differently.
 Memory and peripheral devices each get their own address space. The same address pool can be present in both spaces. Depending on the space used, an address may refer to different things. The space used for peripheral devices is commonly called I/O space, whereas the space used for RAM is called memory space. 
 
-There are different ways a CPU can achieve this. In our case the CPU has a common/shared data and address bus, but separate control lines for I/O and memory. Depending on which of these control lines is set to on, the currently selected address on the address bus either refers to memory or I/O address space. Addresses referring to I/O space are often called port addresses. There are special CPU instructions IN and OUT that enable us to signal to the CPU, that we would like to use I/O addressing. This means any address references in our code that do not use IN or OUT refer to memory space. This will get important in later sections, when we take a look at how to interact with and configure different devices.
+There are different ways a CPU can achieve this. In our case the CPU has a common/shared data and address bus, but separate control lines for I/O and memory. Depending on which of these control lines is set to on, the currently selected address on the address bus either refers to memory or I/O address space. Addresses referring to I/O space are often called port addresses or I/O ports. There are special CPU instructions IN and OUT that enable us to signal to the CPU, that we would like to use I/O addressing. This means any address references in our code that do not use IN or OUT refer to memory space. This will get important in later sections, when we take a look at how to interact with and configure different devices.
 
 
 #### 3.1.4 CPU and the stack
@@ -125,7 +151,7 @@ At some point manufacturers concluded, that separating peripheral device and mem
 
 In conclusion, there are different types of devices, that can be accessed via combination of I/O ports and memory mapping or one of the two. For an example of using memory mapped I/O, take a look at "./tutorials/04-io-devices.asm". However, we recommend reading the following sections about some other devices, we are going to interact with within this example beforehand.
 
-### 3.3 VGA compatible video display
+### 3.3 Cirrus CLGD 5446 PCI VGA card
 
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
 It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-io-devices.asm" we use VGA text mode to write to the screen.
@@ -143,4 +169,4 @@ Standard text modes:
 - 40 × 25, with a 9 × 16 font, with an effective resolution of 360 × 400
 - 80 × 43 or 80 × 50, with an 8 × 8 font grid, with an effective resolution of 640 × 344 or 640 × 400 pixels
 
-### 3.4 8259 compatible PIC
+### 3.4 8259 PIC
