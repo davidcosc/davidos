@@ -52,7 +52,7 @@ main:
 %include "../lib/keyboard-driver-rm.asm"
 
 hello_world_string:
-  db 'Hello, world!', 0x0
+  db 'Press any key from [a to z] or [1 to 9]:', 0x0
   
 padding:       
   times 510-(padding-main) db 0x00     
