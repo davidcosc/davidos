@@ -8,14 +8,14 @@ configure_pics_rm:
   ; we first need to send a special control
   ; word called ICW1 to the command port.
   ; This starts the configuration process
-  ; which requires 2 or 3 more control words
-  ; called ICW2, ICW3 and ICW4 to be send to
-  ; the data port.
+  ; which requires 2 or 3 additional control
+  ; words called ICW2, ICW3 and ICW4 to be
+  ; send to the data port.
   ;
   ; ICW2 specifies the interrupt offset for
   ; all interrupts handled by the respective
   ; pic. Offsets must be divisible by 8.
-  ; Ech pic has 8 interrupt lines. I.e. an
+  ; Each pic has 8 interrupt lines. I.e. an
   ; offset of 0x10 on the master pic results
   ; in IRQ0 being mapped to INT 0x10, IRQ1
   ; being mapped to INT 0x11 and so on. In

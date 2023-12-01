@@ -65,6 +65,8 @@ In order to manage the computer hardware, our operating system must be aware of 
 
 The fact remains, that our operating system must be somewhat aware of the hardware it is running on, in order to function correctly. Similar to the BIOS an operating system implements a hardware detection mechanism for this purpose. This usually involves querying the available bus devices starting from the main bus for all devices connected to them. Depending on the bus type this might be done in different ways. In older legacy systems that used the ISA bus, standard addresses were defined for different devices. These standardized I/O ports had to be known by system developers to access these devices. See section 3.1.3 for more details on I/O ports. Our qemu emulated system comes with an ISA bridge. For simplicity we are going to use standardized I/O ports instead of a discovery mechanism to interface with our devices.
 
+![standardized-io-ports](./images/standardized_io_ports.png)
+
 Apart of the x86-64 CPU and RAM, qemu emulates the following hardware for us:
 - i440FX host PCI bridge
 - PIIX3 (Chipset) PCI to ISA bridge with:
@@ -92,7 +94,7 @@ Apart of the x86-64 CPU and RAM, qemu emulates the following hardware for us:
 - PC speaker
 - PCI UHCI, OHCI, EHCI or XHCI USB controller and a virtual USB-1.1 hub
 
-We will focus on the Cirrus CLGD 5446 PCI VGA card for displaying things on the screen, the 8259 PIC for handling interrupts i.e. from our keyboard, the keyboard itself for user input and the ATA controller for reading from the disk.
+We will focus on the Cirrus CLGD 5446 PCI VGA card for displaying things on the screen, the 8259 PIC for handling interrupts i.e. from our keyboard, the keyboard itself for user input and the ATA controller to read from the disk.
 
 
 ### 3.1 CPU
