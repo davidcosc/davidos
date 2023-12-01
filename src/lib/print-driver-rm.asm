@@ -116,22 +116,22 @@ get_cursor_rm:
   push dx
   xor di, di                               ; Clear DI.
   mov dx, 0x03D4                           ; Mapped address of the VGA I/O port we can use to manipulate the cursor. This is done in combination with the indices below. 
-	mov al, 0x0F                             ; Index for cursor location low register.
-	out dx, al                               ; Reading from the VGA register is done in two steps. We first store the index of the register we want to access at the base port address.
-	inc dl                                   ; The selected registers value will be available at the address following the base address. The VGA hw handles this for us.
-	in ax, dx                                ; The cursor location is stored in two registers, high and low. We first read the lower part of the location/offset word.
+  mov al, 0x0F                             ; Index for cursor location low register.
+  out dx, al                               ; Reading from the VGA register is done in two steps. We first store the index of the register we want to access at the base port address.
+  inc dl                                   ; The selected registers value will be available at the address following the base address. The VGA hw handles this for us.
+  in ax, dx                                ; The cursor location is stored in two registers, high and low. We first read the lower part of the location/offset word.
   xor ah, ah                               ; Clear ff padding in ah. VGA register values are 8 bit. Only al is relevant to us.
   mov di, ax                               ; Store the first part of the offset in DI.
-	dec dl                                   ; Return to base address so we can set the next register we want to target. This will be the cursor location high register.
-	mov al, 0x0E                             ; Index for cursor location high register.
-	out dx, al
- 	inc dl
-	in ax, dx                                ; Retrieve the high part of the location/offset word.
+  dec dl                                   ; Return to base address so we can set the next register we want to target. This will be the cursor location high register.
+  mov al, 0x0E                             ; Index for cursor location high register.
+  out dx, al
+  inc dl
+  in ax, dx                                ; Retrieve the high part of the location/offset word.
   shl ax, 0x8                              ; In order to construct the entire offset, we have to add the high and low parts together. To do this, we have to mov the high part to ah.
-	add di, ax                               ; Calculate the combined offset.
+  add di, ax                               ; Calculate the combined offset.
   pop dx
   pop ax
-	ret
+  ret
 
 [bits 16]
 print_string_rm:
@@ -219,7 +219,7 @@ move_cursor_next_row_rm:
   call set_cursor_rm
   pop bx
   pop ax
-	ret
+  ret
 
 [bits 16]
 set_cursor_rm:
@@ -234,18 +234,18 @@ set_cursor_rm:
   mov bx, di
   shr bx, 0x1                              ; We divide by 2 to get the character offset based on 80x25, since the VGA ports do not use 2 bytes per character like the buffer.
   mov dx, 0x03D4                           ; Mapped address of the VGA I/O port we can use to manipulate the cursor. This is done in combination with the indices below. 
-	mov al, 0x0F                             ; Index for cursor location low register.
-	out dx, al                               ; Writing to the VGA register is done in two steps. We first store the index of the register we want to access at the base port address.
-	inc dl                                   ; We place the value we want to set the selected register to, to the address following the base address. Storing the value is handled by hw.
-	mov al, bl                               ; The cursor location is stored in two registers, high and low. We first write the lower part of the location/offset word.
-	out dx, al
-	dec dl                                   ; Return to base address so we can set the next register we want to target. This will be the cursor location high register.
-	mov al, 0x0E                             ; Index for cursor location high register.
-	out dx, al
- 	inc dl
-	mov al, bh                               ; Store the high part of the location/offset word.
-	out dx, al
+  mov al, 0x0F                             ; Index for cursor location low register.
+  out dx, al                               ; Writing to the VGA register is done in two steps. We first store the index of the register we want to access at the base port address.
+  inc dl                                   ; We place the value we want to set the selected register to, to the address following the base address. Storing the value is handled by hw.
+  mov al, bl                               ; The cursor location is stored in two registers, high and low. We first write the lower part of the location/offset word.
+  out dx, al
+  dec dl                                   ; Return to base address so we can set the next register we want to target. This will be the cursor location high register.
+  mov al, 0x0E                             ; Index for cursor location high register.
+  out dx, al
+  inc dl
+  mov al, bh                               ; Store the high part of the location/offset word.
+  out dx, al
   pop dx
   pop bx
   pop ax
-	ret
+  ret

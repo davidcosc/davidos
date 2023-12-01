@@ -87,10 +87,10 @@ get_cursor_text_buffer_offset_pm:
   ;
   ; Returns:
   ;   EDI = Cursor text buffer offset.
-   call get_cursor_pm
-   imul edi, 0x2                           ; Numbers of characters offset times 2. Each char in text buffer is stored in 2 bytes.
-   add edi, 0xb8000                        ; Add text buffer address to offset to get text buffer address the cursor relates to.
-   ret
+  call get_cursor_pm
+  imul edi, 0x2                           ; Numbers of characters offset times 2. Each char in text buffer is stored in 2 bytes.
+  add edi, 0xb8000                        ; Add text buffer address to offset to get text buffer address the cursor relates to.
+  ret
 
 [bits 32]
 get_cursor_pm:
