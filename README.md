@@ -168,12 +168,7 @@ As we push data onto the stack, the stack expands/grows. We usually set up the s
 Important to note is, that the stack expands/grows downwards from the base pointer. Issuing a PUSH places the value below and not above the address of BP. SP is decremented accordingly. For an example of how to set up the stack, see "./tutorials/03-stack.asm".
 
 
-### 4.3 Main memory (RAM)
-
-As we have learned in section "2 The boot process", one of the first tasks of the BIOS is to initialize main memory, so called random access memory (RAM). As to how this is accomplished, I am not sure. As far as I know, BIOS code is still confidential. It seems likely however, that some I/O port addresses are used to configure or query the memory controller. This might as well be plain wrong though. The important part is, that once the RAM has been initialized, we get access to the (almost) entire memory address range. For example if we plugged in 8 GB of RAM before starting our PC, we would now be able to address (almost) all of it.
-
-
-### 4.4 Cirrus CLGD 5446 PCI VGA card
+### 4.3 Cirrus CLGD 5446 PCI VGA card
 
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
 It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-io-devices.asm" we use VGA text mode to write to the screen.
@@ -183,4 +178,4 @@ VGA uses a combination of memory mapped I/O and port mapped I/O to set up video 
 ![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
 
 
-### 4.5 8259 PIC
+### 4.4 8259 PIC
