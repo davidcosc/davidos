@@ -1,9 +1,7 @@
 ; This is an miniature bootable example assembly program intended to familiarize us with some nasm assembly syntax, important commands
 ; and concepts we are going to use in our actual os later on.
 ;
-; Info about all x86 nasm details can be found at "https://redirect.cs.umbc.edu/courses/pub/www/courses/undergraduate/CMPE310/Fall09/cpatel2/nasm/nasmdoca.html#section-A.2.1".
-;
-; For an overview of some important x86 registers, see "./images/x86_registers.png".
+; Info about all x86 nasm details can be found inside the Intel sdm inside the "docs" directory.
 ;
 ; Some terminology:
 ;   r/m => A register or memory address.

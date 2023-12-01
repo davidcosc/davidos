@@ -1,32 +1,18 @@
-; Prerequisites: "./01-basics.asm".
-;
-; To understand addressing in 16 bit real mode, specifically how absolute addresses in memory are calculated, we must understand a concept called segmentation.
-;
-; In x86 systems there are different types of segments. Each has its own meaning to the cpu in regard to how certain instructions behave.
-; For example we have a code, data and stack segment. 
-; Instructions that manipulate the stack use the stack segment when resolving memory addresses.
-; Instructions that manipulate data e.g. strings in memory use the data segment.
-; To resolve the address of the next code instruction we want to execute, the cpu uses the code segment.
-; In real mode segment starting addresses are defined by a value stored in a segment register.
-; There are different segment registers for the different types of segments. For an overview see "./images/x86_registers.png". 
-;
-; On a side note. It is important to understand, that not all instructions in x86 work with absolute memory addresses.
-; A good example would be the "short jmp" instruction, which calculates where to jump based on the relative distance to the destination in bytes.
+; Prerequisites: "./01-basics.asm". 
 ; 
-; How memory addresses are calculated using segment registers and offset values can best be explained using an example.
+; How memory addresses are calculated using segment registers and offset values can best be shown using an example.
 ; By convention the BIOS places our boot sector code at address 0x7c00. See "./images/important_memory_addresses.png".
-; To do so it also sets certain segment registers. In our case their values default to 0x0000. The beginning of memory.
-; To calculate an absolute memory address in real mode we use the formula: "value of the segment register" * 16 + "offset in bytes".
+; To do so it also sets certain segment registers. In our case their values default to 0x0000. The base of the address space.
 ; For our example we want to access a data value. Hence we make use of the DS register.
 ; To visualize important values of registers, we use the print_hex_rm function.
 ; First we print the value of DS to ensure, the BIOS actually set it to 0x0000.
 ; We then print the offset value our "data_value" label was replaced by during assembly.
 ; Remember that the label value is calculated based on the location counter during assembly.
-; The address where our code was loaded to by BIOS has no effect on the label value/offset. See "basics.asm" for details about label values.
+; The address where our code was loaded to by BIOS has no effect on the label value/offset.
 ; Next we attempt to print the value referenced by the "data_value" label. 
 ; This does not result in the expected value 0x1111 being printed, but some random value.
-; To understand what is happening here, we can make use of our formula.
-; Calculating 0x0000(DS) * 16 + 0x0020 ("data_value" label value), we get an absolute address of 0x0020.
+; To understand what is happening here, we can make use of segmentation address calculation formula.
+; 0x0000(DS) * 16 + 0x0020 ("data_value" label offset), results in an absolute address of 0x0020.
 ; We know our code was loaded to 0x7c00. Which is way off of 0x0020.
 ; To fix this, we now set our DS register value to 0x07c0.
 ; Calculating 0x07c0(DS) * 16 gets us 0x7c00, the starting address our code was loaded to. Adding our label offset now will result
@@ -35,6 +21,9 @@
 ; One special case to mention regarding segments is the code segment definied by the code segment register (CS) and the instruction pointer (IP).
 ; It is special, because we do not manually set the value of CS:IP. In fact we can not do so, because this could completely mess up what instructions the
 ; cpu should load next. CS:IP can only be set together by far jumping.
+;
+; On a side note. It is important to understand, that not all instructions in x86 work with absolute memory addresses.
+; A good example would be the "short jmp" instruction, which calculates where to jump based on the relative distance to the destination in bytes.
 
 [bits 16]
 main:
