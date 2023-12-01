@@ -1,19 +1,5 @@
 ; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm".
 ;
-; One of the problems of low level programming is, that the cpu has a limited number of registers and therefore limited space for temporarily storing variables, values etc.
-; The stack is a simple solution to this problem. It is a memory area defined by a starting address pointed to by a so called base pointer (BP) and another stack pointer (SP)
-; that points to the top of the stack.
-;
-; The stack was explicitly designed this way with the following assumptions in mind:
-;   - We only use it to store things temporarily.
-;   - We do not really care where temporary values are stored (we do not want to need to know the exact address things are stored).
-;   - We want to easily store and retrieve things from the stack.
-;
-; Some interesting features of the stack:
-;   - There are push and pop instructions to easily add and retrieve values from the top of the stack.
-;   - The stack grows downward. A pushed value gets stored below the address of BP. SP is decremented by the values size.
-;   - We can not push and pop single bytes to the stack, but e.g. in 16 bit mode only 16 bit chunks at a time.
-;
 ; For our initial boot sector the stack has already been defined by the BIOS. We can define it manually as well as seen below.
 
 [bits 16]
