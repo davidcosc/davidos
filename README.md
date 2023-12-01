@@ -34,7 +34,7 @@ The very first program our computer runs after a reboot is the basic input/outpu
 - detect and configure other hardware like the bus, pic, disk, usb or display devices amongst others.
 - indentify bootable devices and transfer control to the bootsector by loading it to the specific address 0x7c00. This is where our own code/program will start.
 
-The bootsector is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. We will use qemu to run our bootsector. Qemu is a hardware emulater, that allows us to emulate an entire x86_64 system. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some common assembly commands we will use a lot throughout this project. In case you have never heard about registers before, pls read section 4.1.1 beforehand.
+The bootsector is a program, that is stored in the first 512 bytes of our bootable device i.e. disk drive. To identify a bootsector the BIOS checks, that the value of the last two bytes 511 and 512 matches the magic sequence 0xaa55. To see this in action, we can start by writing our first bootsector. We will use qemu to run our bootsector. Qemu is a hardware emulater, that allows us to emulate an entire x86_64 system. Take a look at "./tutorials/01-basics.asm" for an example bootsector that prints the letter a to the screen using a routine that was setup for us by the BIOS. The code will be commented on in detail to explain some common assembly commands we will use a lot throughout this project.
 
 Inside the tutorials directory we can assemble our bootsector using the command:
 ```
@@ -183,4 +183,4 @@ VGA uses a combination of memory mapped I/O and port mapped I/O to set up video 
 ![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
 
 
-### 4.4 8259 PIC
+### 4.5 8259 PIC
