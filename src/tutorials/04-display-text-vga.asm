@@ -10,6 +10,7 @@ main:
   mov ax, 0xb800
   mov es, ax
   call reset_to_red_screen
+  call hide_cursor
   mov di, MAC_FIRST_VISIBLE_ROW
   mov ah, 0x40
   mov al, 's'

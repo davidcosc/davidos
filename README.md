@@ -154,7 +154,7 @@ Depending on the CPU mode, different CPU registers are used for executing instru
 
 ![x86-registers](./images/x86-registers.png)
 
-Throughout this project, we will learn how to use these registers extensively. Note, that not all instructions can be used with all registers. Each register has its own purpose, constraining which instructions it can be used with. We will not go into detail about this. It is just important to keep in mind when debugging our code later on. The descriptions of the above register overview can be used as a guidline.
+Throughout this project, we will learn how to use these registers extensively. Note, that not all instructions can be used with all registers. Each register has its own purpose, constraining which instructions it can be used with. We will not go into detail about this. It is just important to keep in mind when debugging our code later on. The descriptions of the above register overview can be used as a guidline. The Intel software developer manual contains detailed documentation for all current x86 CPUs. It can be found in the "docs" directory.
 
 
 #### 4.2.2 CPU and the stack
@@ -171,9 +171,15 @@ Important to note is, that the stack expands/grows downwards from the base point
 ### 4.3 Cirrus CLGD 5446 PCI VGA card
 
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
-It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. In "./tutorials/04-display-text-vga.asm" we use VGA text mode to write to the screen.
+It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. Although since 2011 manufacturers starting dropping VGA for GOP or UEFI.Qemu still emulates it though, so we are going to make use of it.
 
-VGA uses a combination of memory mapped I/O and port mapped I/O to set up video buffers and configure video modes.
+VGA devices have over 300 internal registers. It is not feasable to map all of them to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
+
+Writing to a register turns into a two step process. First we write the index of the register we would like to access to the I/O port of the index register. Then we write the value we would like to set this register to, to the I/O port of the data register.
+
+VGA uses a combination of memory mapped I/O and port mapped I/O to set up video buffers, configure video modes or interact with the cursor. Initially the VGA card is set to a 80 x 25 text mode. We will not go into changing vga modes as part of this project. It would require us to access a multitude of registers and the process is documented poorly. Simply put, it is just not worth the effort. We will focus on displaying text using the video buffer and manipulating the cursor by hiding it. This should give us a good overview on how the different I/O methods work. The code can be found at "./tutorials/04-display-text-vga.asm".
+
+The technical CLGD documentation contains detailed information of all the important VGA registers and functions. Below is a quick overview of the standard vga display modes.
 
 ![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
 
