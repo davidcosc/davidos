@@ -36,7 +36,7 @@ hide_cursor:
   ret
 
 [bits 16]
-reset_to_red_screen:
+paint_screen_red:
   ; Paints the entire screen red.
   ; Resets DI to 0x0. 
   ; Only works in 80x25 text mode.
@@ -44,19 +44,45 @@ reset_to_red_screen:
   ; Returns:
   ;   DI = Zero.
   pusha
-  mov ax, 0x4000                           ; Light green background.
+  mov ax, 0x4000                           ; Set red background under black font. Set null character. Only the red background remains.
   xor di, di                               ; Clear di.
   mov cx, 80*25                            ; Set counter register to total screen character size. Using this with rep will repeat the following instruction cx times.
-  rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc di by 2. We write zero to all 80*25 words in video memory for a black screen.
+  rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc di by 2.
   xor di, di                               ; Clear di.
   popa
   ret
 
 [bits 16]
+print_string:
+  ; Write a zero terminated string of
+  ; characters to the screen in VGA text
+  ; mode. Start writing at text buffer
+  ; position DI based on 80x25 text mode.
+  ;
+  ; Arguments:
+  ;   BX = Starting address of the string.
+  ;   DI = Text buffer offset.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after printing
+  ;        the string. Numbers of characters
+  ;        offset times 2.
+  mov byte al, [bx]                        ; Start with the first character.
+  .loop:
+    call print_char
+    inc bx                                 ; Select the next character.
+    mov al, [bx]
+    cmp al, 0x0                            ; In case it is zero, stop printing.
+    jne .loop
+  ret
+
+
+[bits 16]
 print_char:
   ; Write a colored ASCII character
   ; to the screen in VGA 80x25 text mode.
-  ; Requires set_up_text_buffer_rm.
+  ; Requires ES set to text video buffer.
   ;
   ; Arguments:
   ;   AH = Color.
@@ -65,5 +91,5 @@ print_char:
   ;
   ; Returns:
   ;   DI = Initial DI incremented by two.
-  stosw                                    ; Stosw is equivalent to mov [es:di], ax and then inc di by 2.
+  stosw
   ret
