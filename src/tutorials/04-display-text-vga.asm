@@ -10,7 +10,6 @@ MAC_FIRST_VISIBLE_ROW equ TEXT_BUFFER_ROW_SIZE * 0x2
                                            ; This results in our label values / offests being increased by 0x7c00.
 [bits 16]
 main:
-  call hide_cursor
   ; Setup ES to point to text mode video buffer.
   mov ax, 0xb800
   mov es, ax                               ; We select ES instead of DS, because it is used by stosw instruction.
