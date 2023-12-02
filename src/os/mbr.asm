@@ -20,9 +20,9 @@
 ; For simplicity we only define two more SDs, a code and a data segment descriptor. We also use the so called flat model.
 ; All segments will start at address 0x0 and overalp completely.
 
-[org 0x7c00]                               ; The org directive basically tells the location counter to not start counting at zero during assembly but in this case at 0x7c00.
-                                           ; This results in our label values / offests being increased by 0x7c00. This is especially important for the switch to protected mode.
-                                           ; The BIOS sets all segment register to 0x0000 per default. We later on set our data and code segment starting addresses to 0x0 as well
+MAC_FIRST_VISIBLE_ROW equ TEXT_BUFFER_ROW_SIZE * 0x2
+
+[org 0x7c00]                               ; The BIOS sets all segment register to 0x0000 per default. We later on set our data and code segment starting addresses to 0x0 as well
                                            ; in the gdt. With the org directive a label offset of e.g 0x0020 becomes 0x7c20 and can therefore be resolved in both real and protected
                                            ; mode. Without the org directive, we could have manipulated the segment registers in real mode to change segment starting addresses to
                                            ; 0c7c00. With our label offset of 0x0020 we would still end up at the correct address of 0x7c20. After the change to protected mode
@@ -33,13 +33,19 @@ real_mode:
   mov bp, 0x7c00                           
   mov sp, bp
   mov [boot_drive_number], dl              ; BIOS passes us the boot driver number in DL. We better save it before we overwrite DL.
+  ; Set up screen for printing.
+  mov ax, 0xb800
+  mov es, ax
+  call paint_screen_red
+  call hide_cursor
+  mov di, MAC_FIRST_VISIBLE_ROW
   ; Display welcome message.
-  mov ah, 0x03
+  mov ah, 0x40
   mov bx, welcome_string_rm
-  call println_rm
+  call print_string
+  ; New line
+  mov di, TEXT_BUFFER_ROW_SIZE * 0x3
   ; Load additional sector from disk into memory.
-  mov bx, 0x0000
-  mov es, bx
   mov bx, 0x7e00                           ; This is important. We use 0x7e00 to load our pm sector at the address directly following the boot sector. This ensures label offsets work.
   mov dl, [boot_drive_number]              ; Ensure drive number is stored in dl still / again.
   mov dh, 0x02                             ; We want to load 2 additional sectors. 512 bytes each per default.
@@ -47,9 +53,9 @@ real_mode:
   ; Display disk load message.
   add al, '0'                              ; Ascii encode number of successfully loaded sectors.
   mov byte [disk_load_string.replace], al
-  mov ah, 0x06
+  mov ah, 0x40
   mov bx, disk_load_string
-  call println_rm
+  call print_string
   ; Switch to protected mode.
   cli
   lgdt [gdt_descriptor]
@@ -62,7 +68,7 @@ real_mode:
     hlt                                    ; We tell the cpu to idle from this point on unless any interrupts occur.
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
-%include "../lib/print-driver-rm.asm"
+%include "../lib/vga-driver.asm"
 %include "../lib/disk-load.asm"
 
 boot_drive_number:
@@ -109,16 +115,19 @@ protected_mode:
     ; Setup the stack.
     mov ebp, 0x90000
     mov esp, ebp
+    ; New line
+    mov edi, TEXT_BUFFER_ROW_SIZE * 0x4
+    add edi, 0xb8000
     ; Display welcome message.
-    mov ah, 0x02
+    mov ah, 0x40
     mov ebx, welcome_string_pm
-    call println_pm
+    call print_string_pm
     ; Do nothing.
     .hang:
       hlt
       jmp .hang
 
-%include "../lib/print-driver-pm.asm"
+%include "../lib/vga-driver-pm.asm"
 
 welcome_string_pm:
   db 'Davidos is in 32 bit mode!', 0x00

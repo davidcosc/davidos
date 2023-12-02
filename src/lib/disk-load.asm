@@ -9,13 +9,16 @@ chs_load_sectors:
   ; Arguments:
   ;   DL = Boot drive number.
   ;   DH = Number of sectors to read.
-  ;   ES:BX = Address to load sectors to in memory.
+  ;   BX = Address to load sectors to in memory.
   ;
   ; Returns:
   ;   AL = Number of actual sectors loaded.
   ;
+  push es
   push cx
   push dx
+  push 0x0000
+  pop es
   mov ah, 0x02                             ; BIOS read sectors from drive.
   mov al, dh                               ; Set number of sectors to be read.
   mov ch, 0x00                             ; Select cylinder zero.
@@ -27,13 +30,14 @@ chs_load_sectors:
   cmp dh, al                               ; Compare the number of sectors actually read with the number of sectors we wanted to read.
   jne .error
   pop cx
+  pop es
   ret
   .error:
     mov bx, disk_error_string
     mov dl, 0x18
     mov dh, 0x0
-    mov ah, 0x04
-    call print_string_rm
+    mov ah, 0x40
+    call print_string
     .hang:
       hlt
       jmp .hang
