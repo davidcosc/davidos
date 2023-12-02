@@ -2,7 +2,7 @@
 ; For details about the control words used during the configuration process, see "../images/8259_pic_cw.png".
 
 [bits 16]
-configure_pics_rm:
+configure_pics:
   ; Fully configures the pic. This can only
   ; be done by reinitializing it. To do so
   ; we first need to send a special control
@@ -54,6 +54,7 @@ configure_pics_rm:
   sti
   ret
 
+[bits 16]
 mask_interrupts:
   ; Enables or disables specific interrupt
   ; lines on the master and slave pic by

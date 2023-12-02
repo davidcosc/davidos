@@ -34,7 +34,7 @@ tut4:
 
 tut5:
 	mkdir -p bin
-	cd src/tutorials/; nasm 05-io-devices.asm -f bin -o 05-io-devices.bin
-	mv src/tutorials/05-io-devices.bin bin/
-	od -t x1 -A n bin/05-io-devices.bin
-	qemu-system-x86_64 bin/05-io-devices.bin
+	cd src/tutorials/; nasm 05-capture-pressed-keys.asm -f bin -o 05-capture-pressed-keys.bin
+	mv src/tutorials/05-capture-pressed-keys.bin bin/
+	od -t x1 -A n bin/05-capture-pressed-keys.bin
+	qemu-system-x86_64 bin/05-capture-pressed-keys.bin
