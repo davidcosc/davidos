@@ -1,4 +1,8 @@
-ROW_26 equ 0x50 * 0x19
+; This module contains functions to display strings and characters on the screen. It also allows us to hide the cursor.
+
+NUM_CHARS_ROW equ 0x50
+ROW_26 equ NUM_CHARS_ROW * 0x19
+TEXT_BUFFER_ROW_SIZE equ NUM_CHARS_ROW * 0x2
 CRT_CONTROLLER_INDEX_PORT equ 0x3d4
 CRT_CONTROLLER_DATA_PORT equ 0x3d5
 CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX equ 0xf
@@ -61,13 +65,13 @@ print_string:
   ;
   ; Arguments:
   ;   BX = Starting address of the string.
-  ;   DI = Text buffer offset.
+  ;   DI = Text buffer offset. 2 per char.
   ;   AH = Color to print.
   ;
   ; Returns:
-  ;   DI = Text buffer offset after printing
-  ;        the string. Numbers of characters
-  ;        offset times 2.
+  ;   DI = Text buffer offset after the
+  ;        string was printed. Numbers of 
+  ;        characters offset times 2.
   mov byte al, [bx]                        ; Start with the first character.
   .loop:
     call print_char
@@ -82,7 +86,8 @@ print_string:
 print_char:
   ; Write a colored ASCII character
   ; to the screen in VGA 80x25 text mode.
-  ; Requires ES set to text video buffer.
+  ; Requires ES set to the text buffer
+  ; starting address.
   ;
   ; Arguments:
   ;   AH = Color.

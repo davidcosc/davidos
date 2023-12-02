@@ -173,15 +173,31 @@ Important to note is, that the stack expands/grows downwards from the base point
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
 It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. Although since 2011 manufacturers starting dropping VGA for GOP or UEFI.Qemu still emulates it though, so we are going to make use of it.
 
-VGA devices have over 300 internal registers. It is not feasable to map all of them to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
+Initially the VGA card is set to a 80 x 25, 16 color text mode. We will not go into changing VGA modes as part of this project. It would require us to access a multitude of registers and the process is documented poorly. Simply put, it is just not worth the effort. The initial text mode will suffice for our purposes. Below is a quick overview of the standard vga display modes nonetheless.
+
+![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
+
+VGA devices have over 300 internal registers. The technical CLGD documentation contains detailed information about all of them. It is not feasable to map all of them to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
 
 Writing to a register turns into a two step process. First we write the index of the register we would like to access to the I/O port of the index register. Then we write the value we would like to set this register to, to the I/O port of the data register.
 
-VGA uses a combination of memory mapped I/O and port mapped I/O to set up video buffers, configure video modes or interact with the cursor. Initially the VGA card is set to a 80 x 25 text mode. We will not go into changing vga modes as part of this project. It would require us to access a multitude of registers and the process is documented poorly. Simply put, it is just not worth the effort. We will focus on displaying text using the video buffer and manipulating the cursor by hiding it. This should give us a good overview on how the different I/O methods work. The code can be found at "./tutorials/04-display-text-vga.asm".
+The text mode cursor can be manipulated this way. In "./tutorials/04-display-text-vga.asm" we will hide the cursor by moving it outside of the displayed area.
 
-The technical CLGD documentation contains detailed information of all the important VGA registers and functions. Below is a quick overview of the standard vga display modes.
+The VGA screen buffers are directly mapped to memory. The frame buffer contains a bitmap that drives the video display. It is a memory buffer containing data representing all pixels in a complete video frame. Historically mapping every single pixel to main memory was quite expensive. RAM back then was scarce. 
 
-![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
+The text buffer addresses this problem. It is an abstraction, that allows us to only store information about a character and its attributes like foreground and background color in main memory. The VGA hardware then translates this information into the respective pixel data. In text mode the screen is split into a grid of characters, usually 80x25 or 40x25. For simplicity, we can think of the grid in terms of lines and columns.
+
+The memory mapped text buffer uses 2 bytes to represent each character in the grid. They contain the following information.
+
+![text-buffer-char-representation](./images/text-buffer-char-representation.png)
+
+We can choose between 16 colors.
+
+![vga-colors](./images/vga-colors.png)
+
+The first two bytes of the buffer represent the top and left most character in the grid, aka line 1, column 1. The second two bytes represent the character in line 1, olumn 2. The last two bytes of the buffer represent the character in line 25, column 80. 
+
+In "./tutorials/04-display-text-vga.asm" we will use the text buffer to write to the screen.
 
 
 ### 4.4 8259 PIC
