@@ -53,15 +53,31 @@ Alternatively we can use the provided Makefile configuration to build and run ei
 
 ## 3 Interacting with the system
 
-At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations and also I/O operations to interact with all the other devices in our system.
+At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations as well as I/O operations to interact with all the other devices in our system.
 
-Usually interacting with any device in the system is done by either writing or reading to or from the devices "memory". Depending on the device, "memory" can refer to different things like ROM, RAM or a devices registers.
+Physically the CPU can talk to other devices in the system, by sending or receiving data in form of "electrical signals". To do so it uses one or more buses. 
 
-![memory-map](./images/memory-map.png)
+In computer architecture a bus is a communication system that transfers data between components inside a computer. For simplicity we can think of a bus as parallel electrical wires/lines with multiple hardware connections.
 
-x86 processors use byte addressing. "Memory" is organized as a sequence of bytes. Each byte is represented by a binary number called an address. This way the CPU can interact with different parts of the system using these addresses. The range of memory that can be addressed is called an address space.
+![parallel-wire](./images/parallel-wire.png)
 
-Physically, an address is represented on the address bus/lines/pins of the CPU. It can then be used by a secondary data or I/O bus to access the respective memory cell or register etc.
+A real example would be the PCI bus.
+
+![pci-bus](./images/pci-bus.png)
+
+Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data onto the bus, all other devices connected to the bus will receive it.
+
+Not all data is intended for all devices. To solve this, each device ist assigned one or more unique addresses. The master first puts the address of the device it would like to interact with onto the bus. This broadcasts the address to all connected devices. The device with the matching address now knows, that it has been selected as the responder. This establishes a connection between master and responder. From now on all other devices know, that data put onto the bus is intended for either the master or the responder and can be ignored.
+
+Logically and sometimes physically, a bus is split into three parts, the address, data and control bus. Separate lines might be used for addressing, data transfer and transferring control data. 
+
+![addr-data-cont-bus](./images/addr-data-cont-bus.png)
+
+An example communication between the CPU and Memory could look like this. First the CPU places the address of the memory cell it would like to interact with on the address bus. Then it would set the read status on the control bus, signalling to memory, that it would like to read this cell. Memory would then send the data of the addressed cell back to the CPU using the data bus. 
+
+An address may refer to a storage cell of main memory or a register of an I/O device. The range of unique addresses that can be represented on the address bus is called an address space.
+
+x86 processors use byte addressing. This means they can access each byte of memory individually. Each byte is represented by its own address.
 
 
 ### 3.1 Addressing in real mode
@@ -70,7 +86,7 @@ Modern 64 bit CPUs are called such because they can handle 64 bit sized instruct
 
 Historically, the earliest versions of x86 CPUs did not come close to handling 64 bit instructions. The first generations of x86 CPUs were limited to 16 bit instructions. The way these earliest x86 16 bit CPUs worked, was later called real mode. Even today all x86 CPUs still support real mode for backward compatibility. Infact all x86 CPUs initially start running in this 16 bit real mode. It is up to the bootloader to switch to a more modern CPU mode i.e. long mode, which uses 64 bit instructions. For the purpose of our miniature operating system, we will keep using real mode for now though. 
 
-In theory, using 16 bit would limit us to an address space of 64 KB. Even for old systems this would not have been enough to work with. Intel uses a concept called segmentation to extend the available address space size. Instead of only using a single 16 bit general purpose register to calculate an address, an additional 16 bit segment register is used. The combination of both registers allows us to address up to 2^20 bytes or 1 MB of memory. The reason the avaiblable address space ist limited to 2^20 addresses instead of 2^32 is due to hardware design. 8086 CPUs only had 20 physical address pins.
+In theory, using 16 bit would limit us to an address space of 64 KB. Intel uses a concept called segmentation to extend the available address space size. Instead of only using a single 16 bit general purpose register to calculate an address, an additional 16 bit segment register is used. The combination of both registers allows us to address up to 2^20 bytes or 1 MB of memory. The reason the avaiblable address space ist limited to 2^20 addresses instead of 2^32 is due to hardware design. 8086 CPUs only had 20 physical address pins, limiting the address bus to 20 lines.
 
 The following notation is used to specify a byte address using segmentation:
 ```
@@ -93,11 +109,11 @@ Based on the type of instruction, a different segment register might be used to 
 
 There is a lot of different hardware that makes up our computers. Different graphics cards, network cards, hard disk drives, controllers, keyboards, mouses and so on. For each of these devices, a myriad of types and versions from different manufacturers exist. If all of these devices had individual access and configuration mechanisms, building an operating system that could manage all or even most of them would be impossible. Thankfully, over time hardware manufacturers developed access and configuration standards. This way we can build an operating system that can cover a multitude of compatible devices. This does not mean, that an operating system can simply run on all hardware systems. Different hardware systems may still conform to a different set of standards. It is possible though, to support many of them.
 
-In order to choses the correct access mechanism for our hardware, our operating system must be aware of the hardware it is running on. Similar to the BIOS an operating system implements a hardware detection mechanism for this purpose. This usually involves querying the available bus devices, starting from the main bus, for all devices connected to them. Depending on the bus type this might be done in different ways.
+In order to choose the correct access mechanism for our hardware, our operating system must be aware of the hardware it is running on. Similar to the BIOS an operating system implements a hardware detection mechanism for this purpose. This usually involves querying the available buses for connected devices. We would start with the main bus directly connected to our cpu, continuing for each bus connected to this one and so on. This can become quite tedious.
 
-In contrast, older legacy systems used predefined standard addresses. An example of this would be systems using an ISA bus. The industry standard architecture (ISA) defined standard addresses on the bus, where specific devices were expected to be connected to. They were called standardized I/O ports. Section 4.1 covers I/O ports in more detail.
+Older legacy buses like the ISA did not allow us to freely choose to which port we would like to connect our devices. The industry standard architecture (ISA) expected us to connect specifc types of devices to specifc connectors on the bus. Based on the type of device and connector, static addresses were assigned to the devices. These addresses had to be preassigned to connected devices via configuration. They were called standardized I/O ports. Section 4.1 covers I/O ports in more detail.
 
-Our qemu emulated system comes with an ISA bridge. For simplicity we are going to use standardized I/O ports instead of a discovery mechanism to interface with our devices.
+Our qemu emulated system comes with an ISA bridge and connected devices. For simplicity we are going to use standardized I/O ports instead of a discovery mechanism to interface with our devices.
 
 ![standardized-io-ports](./images/standardized-io-ports.png)
 
@@ -133,14 +149,14 @@ We will focus on the Cirrus CLGD 5446 PCI VGA card for displaying things on the 
 
 ### 4.1 Port mapped and memory mapped I/O
 
-In section 3 we mentioned, that an address on the CPUs address bus can either be interpreted by an additional data or I/O bus. As a result a single address may refer to 2 different parts of the system, depending on which bus was used to access it. This means, that we have 2 separate address spaces sharing the same addresses.
+In chapter 3 we mentioned, that addresses may refer to registers of I/O devices. We also briefly covered the importance of the control bus for setting the read/write status.
 
-We call the address space referred to by the data bus "memory space". We call addresses within this space "memory addresses".
-The main purpose of using the memory address space is to access main memory aka RAM. Another purpose is to perform input/output between the CPU and peripheral devices using memory mapped I/O. Some addresses of the memory address space are reserved for specific registers of some peripheral devices. For example, if the CPU attempts to write some data to such an address, that data is written directly to the mapped devices register and not to RAM. As a result not all of RAM is available to us. A concret example of this would be the VGA video text buffer. It is mapped to addresses 0xb8000 to 0xbffff. This amounts to 32 KB we can not address inside RAM, thus reducing the actual available RAM by 32 KB. If all devices used memory mapped I/O, a lot of RAM would not be available to us. This would be especially problematic in earlier x86 Systems. As we learned in section 3.1 we only have 1 MB of memory available in real mode. To tackle this issue Intel set up a second address space via the I/O bus.
+In x86 processors starting with the 8086, the control bus has another important function. Apart from the read/write status, the CPU can set an I/O request status. Based on the status, devices connected to the bus were signalled to handle the incoming address on the address bus differently. This means the same address on the address bus can refer to two different things. As a result, we have 2 separate address spaces sharing the same addresses. 
 
-We call the address space referred to by the I/O bus "I/O space". We call addresses within this space "I/O ports". Almost all peripheral devices have some of their registers mapped to the I/O address space. In our code we can signal the CPU to use I/O ports by using the special instruction IN and OUT.
+If the I/O request status is not set, we call the address space referred to "memory space". We call addresses within this space "memory addresses".
+The main purpose of using the memory address space is to access main memory aka RAM. Another purpose is to perform input/output between the CPU and peripheral devices using memory mapped I/O. Some addresses of the memory address space are reserved for specific registers of some peripheral devices. If the CPU attempts to write some data to such an address, that data is written directly to the mapped devices register and not to RAM. As a result not all of RAM is available to us. A concret example of this would be the VGA text buffer. It is mapped to addresses 0xb8000 to 0xbffff. This amounts to 32 KB we can not address inside RAM, thus reducing the actual available RAM by 32 KB. If all devices used memory mapped I/O, a lot of RAM would not be available to us. Today this would not realy pose a problem. Earlier x86 Systems are a different matter. As we learned in section 3.1 we only have 1 MB of memory available in real mode. To tackle this issue Intel set up a second address space.
 
-Physically there are different ways a CPU can switch between using the I/O or memory space. In our case the CPU has a common/shared data and address bus, but separate control lines for I/O and memory. Depending on which of these control lines is set to on, the currently selected address on the address bus either refers to memory or I/O address space.
+If the I/O requrest status is set, we call the address space referred to "I/O space". We call addresses within this space "I/O ports". Almost all peripheral devices have some of their registers mapped to the I/O address space. In our code we can signal the CPU to use I/O ports by using the special instruction IN and OUT.
 
 
 ### 4.2 CPU
@@ -201,3 +217,8 @@ In "./tutorials/04-display-text-vga.asm" we will use the text buffer to write to
 
 
 ### 4.4 8259 PIC
+
+
+### 4.5 ATA Controller
+
+The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. 
