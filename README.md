@@ -218,11 +218,73 @@ The first two bytes of the buffer represent the top and left most character in t
 In "./tutorials/04-display-text-vga.asm" we will use the text buffer to write to the screen.
 
 
-### 4.4 8259 PIC
+### 4.4 8259A PIC
 
-So far 
+In the previous example, all communication between the CPU and the VGA card was initialzied by the CPU. This approach makes a lot of sense for a display device. We are never going to use the display as an input device. But what if we wanted to change something in our system or program while it is already running. We might want to input some commands using the keyboard for example. In that case we would need a mechanism for detecting that a key was pressed and then act on it. Early computer systems used a mechanism called polling to achieve this. The CPU would periodically test every single input device in sequence and effectively ask each one, if it needs servicing. With every additional device we need to test, this polling cycle becomes more inefficient.
 
 
-### 4.5 ATA Controller
+#### 4.4.1 Interrupts
+
+A more desirable method would be one, where the input device would actively notify the CPU, that it needs servicing. The CPU could continue running the main program. It would only stop to do so, once a servicing request from a peripheral device is received. This method is called interrupt.
+
+The signal sent to the CPU by the input device is called an interrupt request (IRQ). It tells the CPU to complete whatever instruction it is currently executing. The CPU then switches to a new routine, that will service the requesting device. The new routine is called an interrupt service routine (ISR).
+
+
+#### 4.4.2 Programmable interupt controller (PIC)
+
+The PIC functions as an overall manager in an interrupt driven system. Input devices can be connected to the PICs interupt lines. The PIC accepts IRQs of the connected devices. It then determines which of the incoming requests is of the highest importance/priority and issues an interrupt to the CPU.
+
+![vga-colors](./images/interrupts-and-pic.png)
+
+
+#### 4.4.3 Interrupt vector table (IVT)
+
+After issuing an interrupt to the CPU, the PIC must somehow input information into the CPU that can point the program counter to the ISR associated with the requesting device. This pointer is an address in a vectoring table. In real mode this table is called the interrupt vector table. An entry in this table is called an interrupt vector. The pointer passed to the CPU by the PIC is the starting address of an interrupt vector. While the actual interrupt signal is sent to the CPU via the interrupt line, the interrupt vector address is sent via the normal data bus. The specifc interrupt vector address the PIC sends to the CPU for each IRQ can be configured on the PIC side.
+
+
+#### 4.4.4 8259A specifics
+
+The 8259A PIC has 8 interrupt lines, IR0 till IR7. It can be extended by connecting up to eight slave 8259As to one master 8259A. This results in up to 64 interrupt levels or requests. In our qemu system we have 2 connected/cascaded 8259As for a total of 15 different interrupts. One interrupt line on the first PIC is used for the connection to the second one. The master PIC receives interrupts from the slave PIC on this line. Both PICs are connected to the ISA bus.
+
+The master and slave PICs can be addressed using two I/O ports each. They can be used by the CPU to send so called initialization command words (ICW)s and operation command words (OCWs) to the PICs. The master PIC uses I/O ports 0x20 and 0x21. The slave PIC uses 0xa0 and 0xa1.
+
+
+#### 4.4.5 Programming the 8259A
+
+To configure the 8259A for use in an x86 system, we have to pass it 4 initialization command words (ICWs) in sequence. While ICW1 is sent to I/O port 0x20/0xa0, ICW2 to ICW4 are sent to I/O port 0x21/0xa1. ICW3 and ICW4 may be optional depending on the selected configuration.
+
+![8259A-configuration](./images/8259A-configuration.png)
+
+ICW1 starts the initialization sequence. It holds basic information about the PIC setup.
+
+![icw1](./images/icw1.png)
+
+Note, that in an x86 system, the call address interval configuration is not required and thus ignored.
+
+ICW2 configures the interrupt vector addresses generated for all IRQs of the PIC.
+
+![icw2](./images/icw2.png)
+
+In an x86 system the PIC does not generate the actual starting address of the interrupt vector in memory, but rather an interrupt number. The CPU uses the interrupt number to calculate the actual vector address. A15 till A11 are inserted in the five most significant bits of the vectoring byte. The three least significant bits are set to the current interrupt level by the 8259A. It is common for A15 to A11 to be set to the value 0x8. We can think of this value as an offset for the interrupt numbers. Since the 8259A automatically adds the currently prioritized interrupt line numer/level to the lowest three bits, offset and interrupt level are basically added together. With an offset of 8, interrupt 0 becomes interrupt 8. Interrupt 1 becomes interrupt 9 and so on.
+
+![ivt-example](./images/ivt-example.png)
+
+ICW3 for the master PIC is used to select which interrupt line on the master PIC should connect to the slave PIC.
+
+![icw3](./images/icw3.png)
+
+ICW3 for the slave contains the interrupt line number of the master, the slave is connected to aka the cascade identity. I.e if the slave is connected to the masters line 2, the ICW3 for the slave PIC would be 0x2.
+
+ICW4 sets different PIC modes, i.e. 8086 mode.
+
+![icw4](./images/icw4.png)
+
+Code for a full example configuration of the 8259A PIC for use with a keyboard ISR can be found in "./tutorials/05-capture-pressed-keys.asm".
+
+
+### 4.5 Keyboard
+
+
+### 4.6 ATA Controller
 
 The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. 
