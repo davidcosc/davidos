@@ -53,11 +53,11 @@ Alternatively we can use the provided Makefile configuration to build and run ei
 
 ## 3 Interacting with the system
 
-At the core of any computer system lies the central processing uint (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations as well as I/O operations to interact with all the other devices in our system.
+At the core of any computer system lies the central processing unit (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations as well as I/O operations to interact with all the other devices in our system.
 
 Physically the CPU can talk to other devices in the system, by sending or receiving data in form of "electrical signals". To do so it uses one or more buses. 
 
-In computer architecture a bus is a communication system that transfers data between components inside a computer. For simplicity we can think of a bus as parallel electrical wires/lines with multiple hardware connections.
+In computer architecture a bus is a communication system that transfers data between components inside a computer, or between computers. For simplicity we can think of a bus as parallel electrical wires/lines with multiple hardware connections.
 
 ![parallel-wire](./images/parallel-wire.png)
 
@@ -65,17 +65,17 @@ A real example would be the PCI bus.
 
 ![pci-bus](./images/pci-bus.png)
 
-Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data onto the bus, all other devices connected to the bus will receive it.
+Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data on the bus, all other devices connected to the bus will receive it.
 
-Not all data is intended for all devices. To solve this, each device ist assigned one or more unique addresses. The master first puts the address of the device it would like to interact with onto the bus. This broadcasts the address to all connected devices. The device with the matching address now knows, that it has been selected as the responder. This establishes a connection between master and responder. From now on all other devices know, that data put onto the bus is intended for either the master or the responder and can be ignored.
+Not all data is intended for all connected devices. To solve this, each device ist assigned one or more unique addresses. The master first puts the address of the device it would like to interact with onto the bus. This broadcasts the address to all connected devices. The device with the matching address now knows, that it has been selected as the responder. This establishes a connection between master and responder. From now on all other devices know, that data put onto the bus is intended for either the master or the responder and can be ignored.
 
-Logically and sometimes physically, a bus is split into three parts, the address, data and control bus. Separate lines might be used for addressing, data transfer and transferring control data. 
+Logically and sometimes physically, a bus is split into three parts, the address, data and control bus. Separate lines might be used for addressing, data transfer and control status information. 
 
 ![addr-data-cont-bus](./images/addr-data-cont-bus.png)
 
-An example communication between the CPU and Memory could look like this. First the CPU places the address of the memory cell it would like to interact with on the address bus. Then it would set the read status on the control bus, signalling to memory, that it would like to read this cell. Memory would then send the data of the addressed cell back to the CPU using the data bus. 
+An example communication between the CPU and Memory could look like this. First the CPU places the address of the memory cell it would like to interact with on the address bus. To read data from this cell, the CPU would set the read status on the control bus. This signals to memory, that data should be read from the selected cell. Memory would then send the data of the addressed cell back to the CPU using the data bus.
 
-An address may refer to a storage cell of main memory or a register of an I/O device. The range of unique addresses that can be represented on the address bus is called an address space.
+An address may refer to a storage cell of main memory or a register of an I/O device. The range of unique addresses that can be represented on the address bus is called address space.
 
 x86 processors use byte addressing. This means they can access each byte of memory individually. Each byte is represented by its own address.
 
