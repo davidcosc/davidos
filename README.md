@@ -65,7 +65,7 @@ A real example would be the PCI bus.
 
 ![pci-bus](./images/pci-bus.png)
 
-Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data on the bus, all other devices connected to the bus will receive it.
+Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data on the bus, all other devices connected to the bus will receive it. The "bus.pdf" inside the "docs" directory contains details about bus architecture and communication.
 
 Not all data is intended for all connected devices. To solve this, each device ist assigned one or more unique addresses. The master first puts the address of the device it would like to interact with onto the bus. This broadcasts the address to all connected devices. The device with the matching address now knows, that it has been selected as the responder. This establishes a connection between master and responder. From now on all other devices know, that data put onto the bus is intended for either the master or the responder and can be ignored.
 
@@ -193,7 +193,9 @@ Initially the VGA card is set to a 80 x 25, 16 color text mode. We will not go i
 
 ![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
 
-VGA devices have over 300 internal registers. The technical CLGD documentation contains detailed information about all of them. It is not feasable to map all of them to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
+VGA devices have over 300 internal registers. The technical CLGD documentation contains detailed information about all of them. It can be found inside the "docs" directory.
+
+It is not feasable to map all registers to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
 
 Writing to a register turns into a two step process. First we write the index of the register we would like to access to the I/O port of the index register. Then we write the value we would like to set this register to, to the I/O port of the data register.
 
@@ -217,6 +219,8 @@ In "./tutorials/04-display-text-vga.asm" we will use the text buffer to write to
 
 
 ### 4.4 8259 PIC
+
+So far 
 
 
 ### 4.5 ATA Controller
