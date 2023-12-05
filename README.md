@@ -227,20 +227,27 @@ In the previous example, all communication between the CPU and the VGA card was 
 
 A more desirable method would be one, where the input device would actively notify the CPU, that it needs servicing. The CPU could continue running the main program. It would only stop to do so, once a servicing request from a peripheral device is received. This method is called interrupt.
 
-The signal sent to the CPU by the input device is called an interrupt request (IRQ). It tells the CPU to complete whatever instruction it is currently executing. The CPU then switches to a new routine, that will service the requesting device. The new routine is called an interrupt service routine (ISR).
+The signal sent to the CPU by the input device is called an interrupt request (IRQ). It tells the CPU to complete whatever instruction it is currently executing and then switch to a new routine, that will service the requesting device. The new routine is called an interrupt service routine (ISR).
 
 
 #### 4.4.2 Programmable interupt controller (PIC)
 
 The PIC functions as an overall manager in an interrupt driven system. Input devices can be connected to the PICs interupt lines. The PIC accepts IRQs of the connected devices. It then determines which of the incoming requests is of the highest importance/priority and issues an interrupt to the CPU.
 
-![vga-colors](./images/interrupts-and-pic.png)
+![interrupts-and-pic](./images/interrupts-and-pic.png)
 
 
 #### 4.4.3 Interrupt vector table (IVT)
 
-After issuing an interrupt to the CPU, the PIC must somehow input information into the CPU that can point the program counter to the ISR associated with the requesting device. This pointer is an address in a vectoring table. In real mode this table is called the interrupt vector table. An entry in this table is called an interrupt vector. The pointer passed to the CPU by the PIC is the starting address of an interrupt vector. While the actual interrupt signal is sent to the CPU via the interrupt line, the interrupt vector address is sent via the normal data bus. The specifc interrupt vector address the PIC sends to the CPU for each IRQ can be configured on the PIC side.
+After issuing an interrupt to the CPU, the PIC must somehow input information into the CPU that can point the program counter to the ISR associated with the requesting device. This pointer is an address in a vectoring table. In real mode this table is called the interrupt vector table (IVT). An entry in this table is called an interrupt vector. The pointer passed to the CPU by the PIC is the starting address of an interrupt vector. While the actual interrupt signal is sent to the CPU via the interrupt line, the interrupt vector address is sent via the normal data bus. The specifc interrupt vector address the PIC sends to the CPU for each IRQ can be configured on the PIC side.
 
+In a x86 system in real mode, the IVT usually looks something like this.
+
+![ivt-rm](./images/ivt-rm.png)
+
+The names of 8 interrupt vectors starts with IRQ0 to IRQ7. These are the vectors used to by the PIC. Since they are triggered by the PIC as a response to actual hardware, they are called hardware interrupts.
+
+As we can see apart from the hardware interrupts, there are many other vectors inside the IVT. Some point to routines that should be executed once the CPU runs into a certain error. The first vectors in the IVT are usually reserved for such routines. Others are routines that should be run for so called software interrupts. These are interrupts, that are triggered explicitly from within our programs using the INT instruction. In tutorial 1 we used software interrupt 0x10 to display text on the screen. We will not go into detail about software interrupts for this project though.
 
 #### 4.4.4 8259A specifics
 
@@ -267,8 +274,6 @@ ICW2 configures the interrupt vector addresses generated for all IRQs of the PIC
 
 In an x86 system the PIC does not generate the actual starting address of the interrupt vector in memory, but rather an interrupt number. The CPU uses the interrupt number to calculate the actual vector address. A15 till A11 are inserted in the five most significant bits of the vectoring byte. The three least significant bits are set to the current interrupt level by the 8259A. It is common for A15 to A11 to be set to the value 0x8. We can think of this value as an offset for the interrupt numbers. Since the 8259A automatically adds the currently prioritized interrupt line numer/level to the lowest three bits, offset and interrupt level are basically added together. With an offset of 8, interrupt 0 becomes interrupt 8. Interrupt 1 becomes interrupt 9 and so on.
 
-![ivt-example](./images/ivt-example.png)
-
 ICW3 for the master PIC is used to select which interrupt line on the master PIC should connect to the slave PIC.
 
 ![icw3](./images/icw3.png)
@@ -284,6 +289,9 @@ Code for a full example configuration of the 8259A PIC for use with a keyboard I
 
 ### 4.5 Keyboard
 
+In "./tutorials/05-capture-pressed-keys.asm" we configure the PIC to have a single active interrupt line for IRQ1. Usually they keyboard device is connected to IR1 on the master PIC, which is also the case for our qemu setup. Each time a key is pressed, the keyboard triggers IRQ1 on the PIC. The keyboard has registers holding the so called scan codes of the currently pressed keys. They are mapped to standardized I/O port 0x60. Once a keypress generates an interrupt, further keypresses will not generate another one until they keyboard receives an end of intterupt (EOI) signal via I/O port 0x61.
+
+We can write an ISR to read the scan code of the currently pressed key, send an EOI and return the scan code to the main program. We then have to translate the scan code to an ASCII code. To do this we use a map. Based on the keyboard layout we want to use, assign different ASCII values for each scan code. We can see this in action in the second part of tutorial 5.
 
 ### 4.6 ATA Controller
 

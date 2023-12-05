@@ -1,5 +1,4 @@
-; This module contains a routine for configuring the 8259 programmable interrupt controller for usage in 16 bit real mode.
-; For details about the control words used during the configuration process, see "../images/8259_pic_cw.png".
+; This module contains routines for configuring the 8259 programmable interrupt controller.
 
 [bits 16]
 configure_pics:
@@ -29,11 +28,11 @@ configure_pics:
   ;
   ; Arguments:
   ;   BH = ICW2 for master pic.
-  ;   BL = ICW2 offset for slave pic.
+  ;   BL = ICW2 for slave pic.
   cli
   push ax
   ; ICW1
-  mov al, 00010101b                        ; We want an ICW1 that starts the setup process for 2 (default for x86) cascading, edge triggered PICs, using 4 byte interrupt vectors since we are in rm. ICW4 is required in x86.
+  mov al, 00010001b                        ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
   out 0x20, al                             ; Send ICW1 to command port of master pic.
   out 0xA0, al                             ; Send ICW1 to command port of slave pic.
   ; ICW2
