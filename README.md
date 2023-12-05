@@ -251,7 +251,7 @@ As we can see apart from the hardware interrupts, there are many other vectors i
 
 #### 4.4.4 8259A specifics
 
-The 8259A PIC has 8 interrupt lines, IR0 till IR7. It can be extended by connecting up to eight slave 8259As to one master 8259A. This results in up to 64 interrupt levels or requests. In our qemu system we have 2 connected/cascaded 8259As for a total of 15 different interrupts. One interrupt line on the first PIC is used for the connection to the second one. The master PIC receives interrupts from the slave PIC on this line. Both PICs are connected to the ISA bus.
+All details about the 8259A can be found in the respective documentation inside the "docs" directory. The 8259A PIC has 8 interrupt lines, IR0 till IR7. It can be extended by connecting up to eight slave 8259As to one master 8259A. This results in up to 64 interrupt levels or requests. In our qemu system we have 2 connected/cascaded 8259As for a total of 15 different interrupts. One interrupt line on the first PIC is used for the connection to the second one. The master PIC receives interrupts from the slave PIC on this line. Both PICs are connected to the ISA bus.
 
 The master and slave PICs can be addressed using two I/O ports each. They can be used by the CPU to send so called initialization command words (ICW)s and operation command words (OCWs) to the PICs. The master PIC uses I/O ports 0x20 and 0x21. The slave PIC uses 0xa0 and 0xa1.
 
@@ -295,4 +295,16 @@ We can write an ISR to read the scan code of the currently pressed key, send an 
 
 ### 4.6 ATA Controller
 
-The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. 
+The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. ATA supports up to two drives being connected in a daisy chain. Drives are selected by a DRV bit, specifying drive 0 or drive 1. A drive can operate in either of two modes, cylinder head sector (CHS) or logical block addressing (LBA) mode.
+
+We are going to use LBA. LBA splits disk space into 0 to n linear blocks of data. A block or sector is 512 bytes in size. If our drive contains a bootsector, it is located at logical block address 0. The next sector would be LBA 1 and so on.
+
+Reading sectors from an ATA drive can be done in several ways. We are going to use programmed input/output (PIO). PIO is a means of data transfer via the host processor. The drive does not write data directly to memory (DMA), but "routes" it through the CPU. We are going to use the PIO data in command "read sector(s)" specifically. To execute this command, we go through the follwoing process.
+
+![pio-read](./images/pio-read.png)
+
+The base I/O port for the command block registers according to the ISA is 0x1f0. The base address maps directly to the data register. The command register offsets are as follows.
+
+![command-block-registers](./images/command-block-registers.png)
+
+The error register would be I/O port 0x1f1. The sector count register would be I/O port 0x1f2 and so on.
