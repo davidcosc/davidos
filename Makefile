@@ -38,3 +38,10 @@ tut5:
 	mv src/tutorials/05-capture-pressed-keys.bin bin/
 	od -t x1 -A n bin/05-capture-pressed-keys.bin
 	qemu-system-x86_64 bin/05-capture-pressed-keys.bin
+
+tut6:
+	mkdir -p bin
+	cd src/tutorials/; nasm 06-read-disk.asm -f bin -o 06-read-disk.bin
+	mv src/tutorials/06-read-disk.bin bin/
+	od -t x1 -A n bin/06-read-disk.bin
+	qemu-system-x86_64 bin/06-read-disk.bin

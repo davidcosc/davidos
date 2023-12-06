@@ -32,7 +32,6 @@ real_mode:
   ; Set up stack to grow down from 0x0000:0x7c00.
   mov bp, 0x7c00                           
   mov sp, bp
-  mov [boot_drive_number], dl              ; BIOS passes us the boot driver number in DL. We better save it before we overwrite DL.
   ; Set up screen for printing.
   mov ax, 0xb800
   mov es, ax
@@ -43,18 +42,15 @@ real_mode:
   mov ah, 0x40
   mov bx, welcome_string_rm
   call print_string
+  ; Load additional sector from disk into memory.
+  mov ax, 0x1                              ; We want to read sector number 2. We start counting sectors at zero.
+  mov di, 0x7e00                           ; We want to load the sector at the end of our bootsector. This way label offsets work.
+  call read_sector
   ; New line
   mov di, TEXT_BUFFER_ROW_SIZE * 0x3
-  ; Load additional sector from disk into memory.
-  mov bx, 0x7e00                           ; This is important. We use 0x7e00 to load our pm sector at the address directly following the boot sector. This ensures label offsets work.
-  mov dl, [boot_drive_number]              ; Ensure drive number is stored in dl still / again.
-  mov dh, 0x02                             ; We want to load 2 additional sectors. 512 bytes each per default.
-  call chs_load_sectors                    ; Start the actual loading.
-  ; Display disk load message.
-  add al, '0'                              ; Ascii encode number of successfully loaded sectors.
-  mov byte [disk_load_string.replace], al
+  ; Print sector two message.
   mov ah, 0x40
-  mov bx, disk_load_string
+  mov bx, sector_two
   call print_string
   ; Switch to protected mode.
   cli
@@ -69,10 +65,7 @@ real_mode:
     jmp .hang                              ; If we reach here, we keep jumping so we do not execute anything past this point.
 
 %include "../lib/vga-driver.asm"
-%include "../lib/disk-load.asm"
-
-boot_drive_number:
-  db 0x0                                   ; We reserve one byte of space to be overwritten with the actual drive number passed to us by BIOS.
+%include "../lib/ata-driver.asm"
 
 welcome_string_rm:
   db 'Davidos is in 16 bit mode!', 0x00    ; On a side note, for the assembler db 'abc', 0x0 and db 'a', 'b', 'c', 0x0 are equivalent.
@@ -132,8 +125,7 @@ protected_mode:
 welcome_string_pm:
   db 'Davidos is in 32 bit mode!', 0x00
 
-padding_pm:       
-  times 512-(padding_pm-protected_mode) db 0x00
-
-additional_test_sectors:
-  times 512 db '3'
+sector_two:
+  db 'Hello, sector two!', 0x00
+  .padding:
+    times 512-(.padding-sector_two) db 0x00
