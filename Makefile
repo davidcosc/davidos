@@ -45,3 +45,10 @@ tut6:
 	mv src/tutorials/06-read-disk.bin bin/
 	od -t x1 -A n bin/06-read-disk.bin
 	qemu-system-x86_64 bin/06-read-disk.bin
+
+tut7:
+	mkdir -p bin
+	cd src/tutorials/; nasm 07-file-menu.asm -f bin -o 07-file-menu.bin
+	mv src/tutorials/07-file-menu.bin bin/
+	od -t x1 -A n bin/07-file-menu.bin
+	qemu-system-x86_64 bin/07-file-menu.bin

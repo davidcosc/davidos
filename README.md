@@ -314,3 +314,8 @@ To signal to the drive, that we would like to use LBA for data transfer, we have
 ![drive-head-register](./images/drive-head-register.png)
 
 Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
+
+
+## 5 File menu
+
+At this point we have set up all the drivers we are going to use for our operating system. Before we start developing our games, we need to add one more piece to the puzzle. We need a some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a game we can use the arrow keys to traverse through the menu. We then press enter to load the game file to memory and run it. To exit the game and go back to the menu, we will press the escape button.
