@@ -49,9 +49,9 @@ main:
   mov bx, 0x44
   call install_keyboard_driver
   ; Repeatedly print most recently pressed key
-  xor dx, dx
   .loop:
-    mov al, dl
+    mov byte al, [pressed_key_buffer]
+    mov ah, 0x42
     call print_char
     dec di
     dec di

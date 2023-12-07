@@ -1,7 +1,6 @@
 [org 0x7c00]
 [bits 16]
 main:
-  cli
   call setup_display
   call setup_keyboard
   ; Read file menu sector from disk.
@@ -12,10 +11,9 @@ main:
     xor di, di
     ; Setup file menu.
     call render_files
-    sti
-    xor dx, dx
     hlt
-    cli
+    mov byte dl, [pressed_key_buffer]
+    mov byte [pressed_key_buffer], 0x00    ; Clear pressed key buffer.
     cmp dl, '1'
     je .next_file
     cmp dl, '2'
@@ -31,7 +29,7 @@ main:
       add bx, 0x8
       add bx, file_menu
       mov byte al, [bx]
-      mov di, 0x8000                           ; We want to load the sector at the end of our file menu sector.
+      mov di, 0x8000                       ; We want to load the sector at the end of our file menu sector.
       call read_sector
       ; Print file sector message.
       mov ah, 0x40

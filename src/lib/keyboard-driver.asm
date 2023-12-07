@@ -31,17 +31,18 @@ keyboard_isr:
   ; retrieves the scan code of a pressed key
   ; from the keyboard and maps / converts it
   ; to its ascii code based on the below 
-  ; scan_code_to_ascii_map. Since this is an
-  ; isr, it has to be setup in the ivt using
-  ; the install_keyboard_driver routine.
-  ; 
-  ; Returns:
-  ;   DX = Scan code in DH and respective
-  ;        ascii code in DL.
+  ; scan_code_to_ascii_map. The scan code
+  ; and ascii code are stored in the
+  ; pressed_key_buffer.
+  ;
+  ; Use the install_keyboard_driver to set
+  ; this isr up in the ivt.
   cli
   push ax
   push bx
+  push ds
   xor ax, ax
+  mov ds, ax
   in al, 0x60                              ; Read current scan code from keyboard.
   cmp al, 0x2
   jl .end
@@ -49,15 +50,20 @@ keyboard_isr:
   jg .end
     mov bx, scan_code_to_ascii_map
     add bx, ax                             ; Calculate the map index/offset by adding the scan code to the starting address of the map.
-    mov dl, [bx]                           ; Store the ascii code of the key pressed into dl.
-    mov dh, al                             ; Store the respective scan code in dh.
+    shl ax, 4                              ; Move scan code from AL to AH.
+    mov byte al, [bx]                      ; Store the ascii code of the key pressed into al.
+    mov byte [pressed_key_buffer], al      ; Store ascii code in the pressed key buffer.
   .end:
     mov al, 0x61                           ; Send end of interrupt
     out 20h, al                            ; to keyboard.
+  pop ds
   pop bx
   pop ax
   sti
   iret
+
+pressed_key_buffer:
+  db 0x00
 
 scan_code_to_ascii_map:
   ; The following bytes define a vector of
