@@ -1,6 +1,11 @@
 ; This module contains routines to handle keyboard key presses. It includes an isr for getting the ascii values of keys pressed as well as
 ; bootstrap routines to set up the isr in the interrupt vector table such that the keyboard hardware interrupt IRQ1 can trigger it.
 
+ESC_SCAN_CODE equ 0x01
+ENTER_SCAN_CODE equ 0x1c
+UP_ARROW_SCAN_CODE equ 0x48
+DOWN_ARROW_SCAN_CODE equ 0x50
+
 [bits 16]
 install_keyboard_driver:
   ; Setup an interrupt vector inside the ivt
@@ -44,15 +49,15 @@ keyboard_isr:
   xor ax, ax
   mov ds, ax
   in al, 0x60                              ; Read current scan code from keyboard.
-  cmp al, 0x2
-  jl .end
-  cmp al, 0x32
-  jg .end
+  cmp al, 0x1                              ; Each key can generate two scan codes. One for key press and one for key release.
+  jnae .end                                ; We are only interested in pressed keys. We filter out released keys, so we do not
+  cmp al, 0x80                             ; change our buffer on releasing the key. 
+  jae .end
     mov bx, scan_code_to_ascii_map
     add bx, ax                             ; Calculate the map index/offset by adding the scan code to the starting address of the map.
-    shl ax, 4                              ; Move scan code from AL to AH.
+    shl ax, 8                              ; Move scan code from AL to AH.
     mov byte al, [bx]                      ; Store the ascii code of the key pressed into al.
-    mov byte [pressed_key_buffer], al      ; Store ascii code in the pressed key buffer.
+    mov word [pressed_key_buffer], ax      ; Store ascii code in the pressed key buffer.
   .end:
     mov al, 0x61                           ; Send end of interrupt
     out 20h, al                            ; to keyboard.

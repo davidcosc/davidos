@@ -12,11 +12,11 @@ main:
     ; Setup file menu.
     call render_files
     hlt
-    mov byte dl, [pressed_key_buffer]
-    mov byte [pressed_key_buffer], 0x00    ; Clear pressed key buffer.
-    cmp dl, '1'
+    mov word dx, [pressed_key_buffer]
+    mov word [pressed_key_buffer], 0x0000  ; Clear pressed key buffer.
+    cmp dh, DOWN_ARROW_SCAN_CODE
     je .next_file
-    cmp dl, '2'
+    cmp dh, ENTER_SCAN_CODE
     je .load_file
     jmp .loop
     .load_file:

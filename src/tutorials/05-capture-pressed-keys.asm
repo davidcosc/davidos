@@ -50,7 +50,7 @@ main:
   call install_keyboard_driver
   ; Repeatedly print most recently pressed key
   .loop:
-    mov byte al, [pressed_key_buffer]
+    mov word ax, [pressed_key_buffer]
     mov ah, 0x42
     call print_char
     dec di
