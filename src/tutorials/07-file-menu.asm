@@ -3,19 +3,27 @@
 main:
   call setup_display
   call setup_keyboard
-  ; Read file menu sector from disk.
+  ; Read file menu sector one from disk.
   mov ax, 0x1
   mov di, 0x7e00                           ; We want to load the sector at the end of our bootsector.
+  call read_sector
+  ; Read file menu sector two from disk.
+  mov ax, 0x2
+  mov di, 0x8000                           ; We want to load the sector at the end of file menu one sector.
   call read_sector
   .loop:
     xor di, di
     ; Setup file menu.
+    call render_file_menu_header
     call render_files
+    call render_file_menu_footer
     hlt
     mov word dx, [pressed_key_buffer]
     mov word [pressed_key_buffer], 0x0000  ; Clear pressed key buffer.
     cmp dh, DOWN_ARROW_SCAN_CODE
     je .next_file
+    cmp dh, UP_ARROW_SCAN_CODE
+    je .previous_file
     cmp dh, ENTER_SCAN_CODE
     je .load_file
     jmp .loop
@@ -29,16 +37,19 @@ main:
       add bx, 0x8
       add bx, file_menu
       mov byte al, [bx]
-      mov di, 0x8000                       ; We want to load the sector at the end of our file menu sector.
+      mov di, 0x8200                       ; We want to load the sector at the end of our file menu sector two.
       call read_sector
       ; Print file sector message.
       mov ah, 0x40
-      mov bx, 0x8000
-      mov di, TEXT_BUFFER_ROW_SIZE * 0xa
+      mov bx, 0x8200
+      mov di, TEXT_BUFFER_ROW_SIZE * 0xc
       call print_string
       jmp .end
     .next_file:
-      call select_file
+      call select_next_file
+      jmp .end
+    .previous_file:
+      call select_previous_file
     .end:
       jmp .loop
 
@@ -75,25 +86,31 @@ padding:
   dw 0xaa55
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; File menu sector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; File menu sectors ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-FILE_LIST_STARTING_LINE equ 0x5
+FILE_MENU_WELCOME_STARTING_LINE equ 0x2 * TEXT_BUFFER_ROW_SIZE
+FILE_MENU_ENTRY_STARTING_LINE equ 0x7 * TEXT_BUFFER_ROW_SIZE
+FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET equ TEXT_BUFFER_ROW_SIZE - 0x6
 
-file_menu:
-  db 0x02
-  db 'File 1', 0x00, 0x00, 0x02, 0x01
-  db 'File 2', 0x00, 0x00, 0x03, 0x02
-
-selected_file:
-  db 0x01
-
-separator_line:
-  times 80 db '#'
-  db 0x00
+render_file_menu_header:
+  push di
+  push ax
+  push bx
+  mov word di, FILE_MENU_WELCOME_STARTING_LINE
+  mov ah, 0x40
+  mov bx, file_menu_header
+  call print_string
+  pop bx
+  pop ax
+  pop di
+  ret
 
 render_files:
   ; Display all files inside the file menu.
   ; The selected file is highlighted.
+  ;
+  ; Returns:
+  ;   DI = Next line text buffer offset.
   push cx
   push bx
   push ax
@@ -103,13 +120,10 @@ render_files:
     mov bl, cl
     mov di, bx
     dec di
-    add di, FILE_LIST_STARTING_LINE
     imul di, TEXT_BUFFER_ROW_SIZE
-    mov ah, 0x40
-    mov al, '#'
-    call print_char
-    mov al, ' '
-    call print_char
+    add di, FILE_MENU_ENTRY_STARTING_LINE
+    call render_file_entry_padding_right
+    call render_file_entry_padding_left
     dec bl
     imul bx, 0xa
     inc bx
@@ -117,9 +131,43 @@ render_files:
     call color_selected_file
     call print_string
     loop .loop
+  xor ax, ax
+  mov byte al, [file_menu]
+  mov di, ax
+  imul di, TEXT_BUFFER_ROW_SIZE
+  add di, FILE_MENU_ENTRY_STARTING_LINE
   pop ax
   pop bx
   pop cx
+  ret
+
+render_file_entry_padding_left:
+  push bx
+  push ax
+  mov ah, 0x40
+  mov bx, file_entry_hash_padding_left
+  call print_string
+  pop ax
+  pop bx
+  ret
+
+render_file_entry_padding_right:
+  push bx
+  push ax
+  add di, FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET
+  mov ah, 0x40
+  mov bx, file_entry_hash_padding_right
+  call print_string
+  sub di, 0x6
+  sub di, FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET
+  pop ax
+  pop bx
+  ret
+
+render_file_menu_footer:
+  mov ah, 0x40
+  mov bx, file_menu_footer
+  call print_string
   ret
 
 color_selected_file:
@@ -148,7 +196,7 @@ color_selected_file:
   pop bx
   ret
 
-select_file:
+select_next_file:
   push ax
   push bx
   xor ax, ax
@@ -168,8 +216,52 @@ select_file:
   pop ax
   ret
 
-file_menu_padding:
-  times 512-(file_menu_padding-file_menu) db 0x00
+select_previous_file:
+  push ax
+  push bx
+  xor ax, ax
+  xor bx, bx
+  mov byte al, [file_menu]
+  mov byte bl, [selected_file]
+  cmp bl, 0x01
+  jne .next
+  mov byte [selected_file], al
+  jmp .end
+  .next:
+    dec bl
+    mov byte [selected_file], bl
+  .end:
+  pop bx
+  pop ax
+  ret
+
+file_menu_header:
+  times 160 db '#'
+  db '## Use the UP and DOWN arrow keys to navigate files.                          ##'
+  db '## Press ENTER to select a file.                                              ##'
+  times 80 db '#'
+  db 0x00
+
+file_entry_hash_padding_left:
+  db '## ', 0x00
+
+file_entry_hash_padding_right:
+  db ' ##', 0x00
+
+file_menu_footer:
+  times 160 db '#'
+  db 0x00
+
+file_menu:
+  db 0x02
+  db 'File 1', 0x00, 0x00, 0x03, 0x01
+  db 'File 2', 0x00, 0x00, 0x04, 0x02
+
+selected_file:
+  db 0x01
+
+file_menu_sector_padding:
+  times 1024-(file_menu_sector_padding-render_file_menu_header) db 0x00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; File one sector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
