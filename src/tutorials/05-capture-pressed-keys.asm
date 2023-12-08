@@ -1,20 +1,7 @@
-; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm".
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm".
 ;
-; In this module we want to showcase how the cpu and I/O devices interact with each other.
-; We will do so by going over two device drivers in detail.
-; First we will write a driver for printing characters and strings to the screen. We will use memory mapped I/O to showcase the function of the video buffer.
-; We will use port mapped I/O in order to reposition the cursor at the end of the printed text.
-; We will conclude by printing the hello world string to the screen.
-;
-; In a second example, we will showcase hardware interrupts as a means of triggering I/O actions from the devices side, instead of our currently running main program
-; as we did in the previous print driver example. We will initialize the 8259 programmable interrupt controller. This will set up harware interrupts such that an interrupt
-; triggers a jump to a specific interrupt vector inside the interrupt vector table. From there an interrupt service routine will be called.
-;
-; We will set up such an interrupt service routine specifically to handle keys being pressed on a keyboard device (IRQ1). It will retrieve the pressed keys value
-; using port mapped I/O and return in inside the DX register. In the main program we will continuously print the pressed keys respective ascii character to the screen.
-;
-; Since we might use the created drivers later on in our actual minimal os implementation, we will use separate modules "../lib/print-driver-rm.asm", "../lib/pic-driver-rm.asm" and
-; "../lib/keyboard-driver-rm.asm" for our routines.
+; In this module we will reconfigure the 8259A PIC. We will disable all IRQs apart from IRQ1. We will set up a
+; keyboard ISR for IRQ1 at INT 33. Pressed keys will be printed to the screen.
 
 MAC_FIRST_VISIBLE_ROW equ TEXT_BUFFER_ROW_SIZE * 0x2
 

@@ -1,3 +1,7 @@
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm".
+;
+; The bootsector is already loaded into memory for us by the BIOS. In this module we read an additional sector to memory.
+
 [org 0x7c00]
 [bits 16]
 main:

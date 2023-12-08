@@ -318,4 +318,11 @@ Once we have set up the drive/head register, the cylinder high, cylinder low and
 
 ## 5 File menu
 
-At this point we have set up all the drivers we are going to use for our operating system. Before we start developing our games, we need to add one more piece to the puzzle. We need a some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a game we can use the arrow keys to traverse through the menu. We then press enter to load the game file to memory and run it. To exit the game and go back to the menu, we will press the escape button.
+At this point we have set up all the drivers we are going to use for our operating system. Before we start developing our games, we need to add one more piece to the puzzle. We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/07-file-menu.asm".
+
+
+## 6 Putting it all together
+
+We are going to set up our operating system similarly to tutorial 7. Selecting a game and pressing ENTER will run the game. We will add functionality to each game to jump back to the file menu on pressing ESC. The games itself will not be the focus of our project. We will not cover their code in detail. Each game will be placed in its own sector on the disk. This time around we are going to use separate files per sector/feature. We will assemble them separately and then chain them together into a single binary using the cat cli tool. The final code can be found inside the "./bootsector.asm", "./kernel.asm", "./games/pong.asm", "./games/tic-tac-toe.asm" and "sort-symbols.asm". The bootsector will setup our drivers and load our kernel. The kernel will setup the file menu to select and load our games. The games will contain code for exiting back to the file menu.
+
+The end?!
