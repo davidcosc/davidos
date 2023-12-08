@@ -1,17 +1,11 @@
-;=============================================================================
-; ATA read sectors (LBA mode) 
-;
-; @param AX Logical Block Address of sector
-; @param DI The address of buffer to put data obtained from disk
-;
-; @return None
-;=============================================================================
+; This module contains a routine for reading from an ATA disk using PIO data in.
+
 NUM_SECTORS_READ equ 1
 SECTOR_WORD_SIZE equ 256
 LBA_MODE_AND_DRIVE_ZERO equ 0b11100000
 READ_RETRY_COMMAND equ 0x20
 STATUS_REGISTER_DRQ_SET equ 0b00001000
-COMMAND_BLOCK_BASE_IO_PORT equ 0x1f0
+COMMAND_BLOCK_BASE_IO_PORT equ 0x01f0
 COMMAND_BLOCK_DATA_IO_PORT equ COMMAND_BLOCK_BASE_IO_PORT
 COMMAND_BLOCK_SECTOR_COUNT_IO_PORT equ COMMAND_BLOCK_BASE_IO_PORT + 0x2
 COMMAND_BLOCK_SECTOR_NUMBER_IO_PORT equ COMMAND_BLOCK_BASE_IO_PORT + 0x3
@@ -22,8 +16,17 @@ COMMAND_BLOCK_COMMAND_IO_PORT equ COMMAND_BLOCK_BASE_IO_PORT + 0x7
 COMMAND_BLOCK_STATUS_IO_PORT equ COMMAND_BLOCK_COMMAND_IO_PORT
 
 read_sector:
+  ; Read a single sector from disk to memory
+  ; using using ATA PIO data in. The sector
+  ; is specified by its LBA.
+  ;
+  ; Arguments:
+  ;   AL = Selected sectors LBA.
+  ;   DI = Target memory address.
   push es
   push dx
+  push ax
+  push di
   ; Setup ES for disk data read.
   mov dx, 0x0000
   mov es, dx
@@ -58,6 +61,8 @@ read_sector:
   mov cx, SECTOR_WORD_SIZE
   mov dx, COMMAND_BLOCK_DATA_IO_PORT
   rep insw
+  pop di
+  pop ax
   pop dx
   pop es
   ret

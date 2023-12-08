@@ -12,14 +12,10 @@ main:
   mov bp, 0x7c00                           
   mov sp, bp
   ; Setup empty screen.
-  mov ax, 0xb800
-  mov es, ax
   call paint_screen_red
   call hide_cursor
   ; Display hello world.
   mov di, MAC_FIRST_VISIBLE_ROW
-  mov dl, 0x9                              ; Select row nine.
-  mov dh, 0x0                              ; Select column one.
   mov ah, 0x42                             ; Select color green on red.
   mov bx, press_key_string                 ; Set starting address of the string to print.
   call print_string
@@ -36,6 +32,8 @@ main:
   mov bx, 0x44
   call install_keyboard_driver
   ; Repeatedly print most recently pressed key
+  mov ax, 0xb800                           ; Print char requires ES to point to text buffer starting address.
+  mov es, ax
   .loop:
     mov word ax, [pressed_key_buffer]
     mov ah, 0x42

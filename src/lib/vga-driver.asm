@@ -1,4 +1,4 @@
-; This module contains functions to display strings and characters on the screen. It also allows us to hide the cursor.
+; This module contains routines to display strings and characters on the screen. It also allows us to hide the cursor.
 
 NUM_CHARS_ROW equ 0x50
 ROW_26 equ NUM_CHARS_ROW * 0x19
@@ -47,13 +47,19 @@ paint_screen_red:
   ;
   ; Returns:
   ;   DI = Zero.
-  pusha
+  push ax
+  push es
+  push cx
+  mov ax, 0xb800
+  mov es, ax                               ; Set up text buffer starting address as ES segment start.
   mov ax, 0x4000                           ; Set red background under black font. Set null character. Only the red background remains.
   xor di, di                               ; Clear di.
   mov cx, 80*25                            ; Set counter register to total screen character size. Using this with rep will repeat the following instruction cx times.
   rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc di by 2.
   xor di, di                               ; Clear di.
-  popa
+  pop cx
+  pop es
+  pop ax
   ret
 
 [bits 16]
@@ -72,13 +78,23 @@ print_string:
   ;   DI = Text buffer offset after the
   ;        string was printed. Numbers of 
   ;        characters offset times 2.
+  push ax
+  push bx
+  push es
+  push dx
+  mov dx, 0xb800
+  mov es, dx
   mov byte al, [bx]                        ; Start with the first character.
   .loop:
     call print_char
     inc bx                                 ; Select the next character.
-    mov al, [bx]
+    mov byte al, [bx]
     cmp al, 0x0                            ; In case it is zero, stop printing.
     jne .loop
+  pop dx
+  pop es
+  pop bx
+  pop ax
   ret
 
 
@@ -96,5 +112,7 @@ print_char:
   ;
   ; Returns:
   ;   DI = Initial DI incremented by two.
+  push ax
   stosw
+  pop ax
   ret

@@ -31,6 +31,7 @@ configure_pics:
   ;   BL = ICW2 for slave pic.
   cli
   push ax
+  push bx
   ; ICW1
   mov al, 00010001b                        ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
   out 0x20, al                             ; Send ICW1 to command port of master pic.
@@ -49,6 +50,7 @@ configure_pics:
   mov al, 00000001b                        ; We want ICW4 to set x86 mode environment.
   out 0x21, al                             ; Send ICW4 to data port of master pic.
   out 0xA1, al                             ; Send ICW4 to data port of slave pic.
+  pop bx
   pop ax
   sti
   ret

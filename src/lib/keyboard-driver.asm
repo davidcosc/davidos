@@ -20,10 +20,12 @@ install_keyboard_driver:
   cli
   push ds
   push ax
-  mov ax, 0x0                               ; Set up the data segment to the starting address of the ivt 0x0.
+  push bx
+  mov ax, 0x0000                            ; Set up the data segment to the starting address of the ivt 0x0.
   mov ds, ax
-  mov [bx], word keyboard_isr               ; An entry in the ivt is 4 bytes long. The first two bytes must contain the address offset of the isr.
-  mov [bx+2], word 0x0                      ; The second two bytes must contain the respective segment address. Both form the complete address to jump to.
+  mov word [bx], keyboard_isr               ; An entry in the ivt is 4 bytes long. The first two bytes must contain the address offset of the isr.
+  mov word [bx+2], 0x0                      ; The second two bytes must contain the respective segment address. Both form the complete address to jump to.
+  pop bx
   pop ax
   pop ds
   sti

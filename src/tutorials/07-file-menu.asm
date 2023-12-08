@@ -7,14 +7,24 @@
 [org 0x7c00]
 [bits 16]
 main:
-  call setup_display
-  call setup_keyboard
+  ; Setup empty screen.
+  call paint_screen_red
+  call hide_cursor
+  ; Setup interrupts and keyboard ISR.
+  mov bh, 0x20                             ; Master pic interrupt offset.
+  mov bl, 0x70                             ; Slave pic interrupt offset.
+  call configure_pics
+  mov bh, 11111101b
+  mov bl, 11111111b
+  call mask_interrupts
+  mov bx, 0x0084
+  call install_keyboard_driver
   ; Read file menu sector one from disk.
-  mov ax, 0x1
+  mov ax, 0x0001
   mov di, 0x7e00                           ; We want to load the sector at the end of our bootsector.
   call read_sector
   ; Read file menu sector two from disk.
-  mov ax, 0x2
+  mov ax, 0x0002
   mov di, 0x8000                           ; We want to load the sector at the end of file menu one sector.
   call read_sector
   .loop:
@@ -36,7 +46,7 @@ main:
     .load_file:
       xor bx, bx
       xor ax, ax
-      mov bl, [selected_file]
+      mov byte bl, [selected_file]
       dec bx
       imul bx, 0xa
       inc bx
@@ -58,29 +68,6 @@ main:
       call select_previous_file
     .end:
       jmp .loop
-
-setup_display:
-  ; Setup ES to point to text mode video buffer.
-  mov ax, 0xb800
-  mov es, ax
-  ; Setup empty screen.
-  call paint_screen_red
-  call hide_cursor
-  ret
-
-setup_keyboard:
-  ; Reinitialize pic with new irq offset.
-  mov bh, 0x20                             ; Master pic interrupt offset.
-  mov bl, 0x70                             ; Slave pic interrupt offset.
-  call configure_pics
-  ; Disable all interrupts apart from IRQ1.
-  mov bh, 11111101b
-  mov bl, 11111111b
-  call mask_interrupts
-  ; Set up keyboard isr in ivt
-  mov bx, 0x84
-  call install_keyboard_driver
-  ret
 
 %include "../lib/vga-driver.asm"
 %include "../lib/ata-driver.asm"

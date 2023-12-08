@@ -120,7 +120,7 @@ protected_mode:
       hlt
       jmp .hang
 
-%include "../lib/vga-driver-pm.asm"
+%include "./vga-driver-pm.asm"
 
 welcome_string_pm:
   db 'Davidos is in 32 bit mode!', 0x00

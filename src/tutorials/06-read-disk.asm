@@ -5,9 +5,6 @@
 [org 0x7c00]
 [bits 16]
 main:
-  ; Setup ES to point to text mode video buffer.
-  mov ax, 0xb800
-  mov es, ax
   ; Setup empty screen.
   call paint_screen_red
   call hide_cursor
