@@ -1,12 +1,14 @@
 ; This module contains routines to display strings and characters on the screen. It also allows us to hide the cursor.
 
-NUM_CHARS_ROW equ 0x50
-ROW_26 equ NUM_CHARS_ROW * 0x19
-TEXT_BUFFER_ROW_SIZE equ NUM_CHARS_ROW * 0x2
-CRT_CONTROLLER_INDEX_PORT equ 0x3d4
-CRT_CONTROLLER_DATA_PORT equ 0x3d5
-CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX equ 0xf
-CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX equ 0xe
+NUM_CHARS_ROW equ 80
+NUM_CHARS_COLUMN equ 25
+TOTAL_CHARS_TEXT_MODE equ NUM_CHARS_ROW * NUM_CHARS_COLUMN
+ROW_26 equ NUM_CHARS_ROW * 25
+TEXT_BUFFER_ROW_SIZE equ NUM_CHARS_ROW * 2
+CRT_CONTROLLER_INDEX_PORT equ 0x03d4
+CRT_CONTROLLER_DATA_PORT equ 0x03d5
+CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX equ 0x0f
+CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX equ 0x0e
 
 [bits 16]
 hide_cursor:
@@ -17,23 +19,23 @@ hide_cursor:
   push dx
   push bx
   ; Store the new cursor positiong.
-  mov bx, ROW_26
+  mov word bx, ROW_26
   ; Set the cursor location low index.
-  mov dx, CRT_CONTROLLER_INDEX_PORT
-  mov al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX
-  out dx, al
+  mov word dx, CRT_CONTROLLER_INDEX_PORT
+  mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX
+  out byte dx, al
   ; Set the cursor location low value.
-  mov dx, CRT_CONTROLLER_DATA_PORT
+  mov word dx, CRT_CONTROLLER_DATA_PORT
   mov al, bl                               ; Lower part of the new cursor location. The cursor location is split in two VGA registers.
-  out dx, al
+  out byte dx, al
   ; Set the cursor location high index.
-  mov dx, CRT_CONTROLLER_INDEX_PORT
-  mov al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX
-  out dx, al
+  mov word dx, CRT_CONTROLLER_INDEX_PORT
+  mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX
+  out byte dx, al
   ; Set the cursor location high value.
-  mov dx, CRT_CONTROLLER_DATA_PORT
+  mov word dx, CRT_CONTROLLER_DATA_PORT
   mov al, bh                               ; High part of the new cursor location.
-  out dx, al
+  out byte dx, al
   pop bx
   pop dx
   pop ax
@@ -50,11 +52,11 @@ paint_screen_red:
   push ax
   push es
   push cx
-  mov ax, 0xb800
+  mov word ax, 0xb800
   mov es, ax                               ; Set up text buffer starting address as ES segment start.
-  mov ax, 0x4000                           ; Set red background under black font. Set null character. Only the red background remains.
+  mov word ax, 0x4000                      ; Set red background under black font. Set null character. Only the red background remains.
   xor di, di                               ; Clear di.
-  mov cx, 80*25                            ; Set counter register to total screen character size. Using this with rep will repeat the following instruction cx times.
+  mov word cx, TOTAL_CHARS_TEXT_MODE       ; Set counter register to total screen character size. Using this with rep will repeat the following instruction cx times.
   rep stosw                                ; Stosw is equivalent to mov [es:di], ax and then inc di by 2.
   xor di, di                               ; Clear di.
   pop cx
@@ -82,7 +84,7 @@ print_string:
   push bx
   push es
   push dx
-  mov dx, 0xb800
+  mov word dx, 0xb800
   mov es, dx
   mov byte al, [bx]                        ; Start with the first character.
   .loop:

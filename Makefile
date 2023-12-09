@@ -1,7 +1,10 @@
 os:
 	mkdir -p bin
-	cd src/os/; nasm mbr.asm -f bin -o davidos.bin
-	mv src/os/davidos.bin bin/
+	cd src/os/; nasm bootsector.asm -f bin -o bootsector.bin
+	cd src/os/; nasm kernel.asm -f bin -o kernel.bin
+	mv src/os/bootsector.bin bin/
+	mv src/os/kernel.bin bin/
+	cat bin/bootsector.bin bin/kernel.bin > bin/davidos.bin
 	qemu-system-x86_64 bin/davidos.bin
 
 tut1:

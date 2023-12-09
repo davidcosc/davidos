@@ -33,23 +33,23 @@ configure_pics:
   push ax
   push bx
   ; ICW1
-  mov al, 00010001b                        ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
-  out 0x20, al                             ; Send ICW1 to command port of master pic.
-  out 0xA0, al                             ; Send ICW1 to command port of slave pic.
+  mov byte al, 00010001b                   ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
+  out byte 0x20, al                        ; Send ICW1 to command port of master pic.
+  out byte 0xA0, al                        ; Send ICW1 to command port of slave pic.
   ; ICW2
   mov al, bh
-  out 0x21, al                             ; Send ICW2 to data port of master pic.
+  out byte 0x21, al                        ; Send ICW2 to data port of master pic.
   mov al, bl
-  out 0xA1, al                             ; Send ICW2 to data port of slave pic.
+  out byte 0xA1, al                        ; Send ICW2 to data port of slave pic.
   ; ICW3
-  mov al, 00000100b                        ; We expect the slave pic to be connected to the master on IRQ2 pin.
-  out 0x21, al                             ; Send ICW3 to data port of master pic.
-  mov al, 0x02                             ; We expect the slave pic to have a cascade identity of 2. It triggers IRQ2 on master.
-  out 0xA1, al                             ; Send ICW3 to data port of slave pic.
+  mov byte al, 00000100b                   ; We expect the slave pic to be connected to the master on IRQ2 pin.
+  out byte 0x21, al                        ; Send ICW3 to data port of master pic.
+  mov byte al, 0x02                        ; We expect the slave pic to have a cascade identity of 2. It triggers IRQ2 on master.
+  out byte 0xA1, al                        ; Send ICW3 to data port of slave pic.
   ; ICW4
-  mov al, 00000001b                        ; We want ICW4 to set x86 mode environment.
-  out 0x21, al                             ; Send ICW4 to data port of master pic.
-  out 0xA1, al                             ; Send ICW4 to data port of slave pic.
+  mov byte al, 00000001b                   ; We want ICW4 to set x86 mode environment.
+  out byte 0x21, al                        ; Send ICW4 to data port of master pic.
+  out byte 0xA1, al                        ; Send ICW4 to data port of slave pic.
   pop bx
   pop ax
   sti
@@ -74,8 +74,8 @@ mask_interrupts:
   ;   BL = OCW1 for the slave pic.
   cli
   mov al, bh
-  out 0x21, al                             ; Send OCW1 to data port of master pic.
+  out byte 0x21, al                        ; Send OCW1 to data port of master pic.
   mov al, bl
-  out 0xA1, al                             ; Send OCW1 to data port of slave pic.
+  out byte 0xA1, al                        ; Send OCW1 to data port of slave pic.
   sti
   ret

@@ -9,13 +9,13 @@ main:
   call paint_screen_red
   call hide_cursor
   ; Read disk.
-  mov ax, 0x1                              ; We want to read sector number 2. We start counting sectors at zero.
-  mov di, 0x7e00                           ; We want to load the sector at the end of our bootsector. This way label offsets work.
+  mov word ax, 0x0001                      ; We want to read sector number 2. We start counting sectors at zero.
+  mov word di, 0x7e00                      ; We want to load the sector at the end of our bootsector. This way label offsets work.
   call read_sector
   ; Print sector two message.
-  mov ah, 0x40
-  mov bx, sector_two
-  mov di, TEXT_BUFFER_ROW_SIZE * 0x2
+  mov byte ah, 0x40
+  mov word bx, sector_two
+  mov word di, TEXT_BUFFER_ROW_SIZE * 0x0002
   call print_string
   .loop:
     hlt

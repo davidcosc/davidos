@@ -21,10 +21,10 @@ install_keyboard_driver:
   push ds
   push ax
   push bx
-  mov ax, 0x0000                            ; Set up the data segment to the starting address of the ivt 0x0.
+  mov word ax, 0x0000                      ; Set up the data segment to the starting address of the ivt 0x0.
   mov ds, ax
-  mov word [bx], keyboard_isr               ; An entry in the ivt is 4 bytes long. The first two bytes must contain the address offset of the isr.
-  mov word [bx+2], 0x0                      ; The second two bytes must contain the respective segment address. Both form the complete address to jump to.
+  mov word [bx], keyboard_isr              ; An entry in the ivt is 4 bytes long. The first two bytes must contain the address offset of the isr.
+  mov word [bx+2], 0x0                     ; The second two bytes must contain the respective segment address. Both form the complete address to jump to.
   pop bx
   pop ax
   pop ds
@@ -50,19 +50,19 @@ keyboard_isr:
   push ds
   xor ax, ax
   mov ds, ax
-  in al, 0x60                              ; Read current scan code from keyboard.
+  in byte al, 0x60                         ; Read current scan code from keyboard.
   cmp al, 0x1                              ; Each key can generate two scan codes. One for key press and one for key release.
   jnae .end                                ; We are only interested in pressed keys. We filter out released keys, so we do not
   cmp al, 0x80                             ; change our buffer on releasing the key. 
   jae .end
-    mov bx, scan_code_to_ascii_map
+    mov word bx, scan_code_to_ascii_map
     add bx, ax                             ; Calculate the map index/offset by adding the scan code to the starting address of the map.
     shl ax, 8                              ; Move scan code from AL to AH.
     mov byte al, [bx]                      ; Store the ascii code of the key pressed into al.
     mov word [pressed_key_buffer], ax      ; Store ascii code in the pressed key buffer.
   .end:
-    mov al, 0x61                           ; Send end of interrupt
-    out 20h, al                            ; to keyboard.
+    mov byte al, 0x61                      ; Send end of interrupt
+    out byte 0x20, al                      ; to keyboard.
   pop ds
   pop bx
   pop ax
