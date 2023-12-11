@@ -1,6 +1,9 @@
 ; This module contains routines to handle keyboard key presses. It includes an isr for getting the ascii values of keys pressed as well as
 ; bootstrap routines to set up the isr in the interrupt vector table such that the keyboard hardware interrupt IRQ1 can trigger it.
 
+PS2_CONTROLLER_DATA_IO_PORT equ 0x0060
+PIC_8259A_EOI_PORT equ 0x0020
+PIC_8259A_EOI_COMMAND equ 0x20
 ESC_SCAN_CODE equ 0x01
 ENTER_SCAN_CODE equ 0x1c
 UP_ARROW_SCAN_CODE equ 0x48
@@ -45,12 +48,14 @@ keyboard_isr:
   ; Use the install_keyboard_driver to set
   ; this isr up in the ivt.
   cli
+  push dx
   push ax
   push bx
   push ds
   xor ax, ax
   mov ds, ax
-  in byte al, 0x60                         ; Read current scan code from keyboard.
+  mov dx, PS2_CONTROLLER_DATA_IO_PORT
+  in byte al, dx                           ; Read current scan code from keyboard.
   cmp al, 0x1                              ; Each key can generate two scan codes. One for key press and one for key release.
   jnae .end                                ; We are only interested in pressed keys. We filter out released keys, so we do not
   cmp al, 0x80                             ; change our buffer on releasing the key. 
@@ -61,11 +66,13 @@ keyboard_isr:
     mov byte al, [bx]                      ; Store the ascii code of the key pressed into al.
     mov word [pressed_key_buffer], ax      ; Store ascii code in the pressed key buffer.
   .end:
-    mov byte al, 0x61                      ; Send end of interrupt
-    out byte 0x20, al                      ; to keyboard.
+    mov word dx, PIC_8259A_EOI_PORT
+    mov byte al, PIC_8259A_EOI_COMMAND
+    out byte dx, al
   pop ds
   pop bx
   pop ax
+  pop dx
   sti
   iret
 

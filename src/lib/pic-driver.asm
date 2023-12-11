@@ -1,5 +1,15 @@
 ; This module contains routines for configuring the 8259 programmable interrupt controller.
 
+MASTER_PIC_COMANND_IO_PORT equ 0x0020
+MASTER_PIC_DATA_IO_PORT equ 0x0021
+SLAVE_PIC_COMANND_IO_PORT equ 0x00A0
+SLAVE_PIC_DATA_IO_PORT equ 0x00A1
+MASTER_DEFAULT_INT_OFFSET equ 0x20
+SLAVE_DEFAULT_INT_OFFSET equ 0x70
+IVT_ENTRY_BYTE_SIZE equ 4
+MASTER_DEFAULT_IRQ0_IVT_ADDRESS equ MASTER_DEFAULT_INT_OFFSET * IVT_ENTRY_BYTE_SIZE
+MASTER_DEFAULT_IRQ1_IVT_ADDRESS equ MASTER_DEFAULT_IRQ0_IVT_ADDRESS + IVT_ENTRY_BYTE_SIZE
+
 [bits 16]
 configure_pics:
   ; Fully configures the pic. This can only
@@ -30,28 +40,38 @@ configure_pics:
   ;   BH = ICW2 for master pic.
   ;   BL = ICW2 for slave pic.
   cli
+  push dx
   push ax
   push bx
   ; ICW1
   mov byte al, 00010001b                   ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
-  out byte 0x20, al                        ; Send ICW1 to command port of master pic.
-  out byte 0xA0, al                        ; Send ICW1 to command port of slave pic.
+  mov dx, MASTER_PIC_COMANND_IO_PORT
+  out byte dx, al
+  mov dx, SLAVE_PIC_COMANND_IO_PORT
+  out byte dx, al
   ; ICW2
   mov al, bh
-  out byte 0x21, al                        ; Send ICW2 to data port of master pic.
+  mov dx, MASTER_PIC_DATA_IO_PORT
+  out byte dx, al
   mov al, bl
-  out byte 0xA1, al                        ; Send ICW2 to data port of slave pic.
+  mov dx, SLAVE_PIC_DATA_IO_PORT
+  out byte dx, al
   ; ICW3
   mov byte al, 00000100b                   ; We expect the slave pic to be connected to the master on IRQ2 pin.
-  out byte 0x21, al                        ; Send ICW3 to data port of master pic.
+  mov dx, MASTER_PIC_DATA_IO_PORT
+  out byte dx, al
   mov byte al, 0x02                        ; We expect the slave pic to have a cascade identity of 2. It triggers IRQ2 on master.
-  out byte 0xA1, al                        ; Send ICW3 to data port of slave pic.
+  mov dx, SLAVE_PIC_DATA_IO_PORT
+  out byte dx, al
   ; ICW4
   mov byte al, 00000001b                   ; We want ICW4 to set x86 mode environment.
-  out byte 0x21, al                        ; Send ICW4 to data port of master pic.
-  out byte 0xA1, al                        ; Send ICW4 to data port of slave pic.
+  mov dx, MASTER_PIC_DATA_IO_PORT
+  out byte dx, al
+  mov dx, SLAVE_PIC_DATA_IO_PORT
+  out byte dx, al
   pop bx
   pop ax
+  pop dx
   sti
   ret
 
@@ -73,9 +93,15 @@ mask_interrupts:
   ;   BH = OCW1 for the master pic.
   ;   BL = OCW1 for the slave pic.
   cli
+  push ax
+  push dx
   mov al, bh
-  out byte 0x21, al                        ; Send OCW1 to data port of master pic.
+  mov dx, MASTER_PIC_DATA_IO_PORT
+  out byte dx, al
   mov al, bl
-  out byte 0xA1, al                        ; Send OCW1 to data port of slave pic.
+  mov dx, SLAVE_PIC_DATA_IO_PORT
+  out byte dx, al
+  pop dx
+  pop ax
   sti
   ret
