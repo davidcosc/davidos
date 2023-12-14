@@ -99,6 +99,77 @@ print_string:
   pop ax
   ret
 
+[bits 16]
+print_hex_word:
+  ; Write a 16 bit hex number to the screen
+  ; in VGA text mode. Start writing at text
+  ; buffer position DI based on 80x25 text
+  ; mode.
+  ;
+  ; Arguments:
+  ;   BX = Hex word to print.
+  ;   DI = Text buffer offset. 2 per char.
+  ;   AH = Color to print.
+  ;
+  ; Returns:
+  ;   DI = Text buffer offset after the
+  ;        number was printed. Numbers of
+  ;        characters offset times 2.
+  push es
+  push ax
+  push bx
+  push dx
+  mov word dx, 0xb800
+  mov es, dx
+  mov dh, bh
+  shr dh, 4
+  mov al, dh
+  call print_hex_nibble
+  mov dh, bh
+  shl dh, 4
+  shr dh, 4
+  mov al, dh
+  call print_hex_nibble
+  mov dh, bl
+  shr dh, 4
+  mov al, dh
+  call print_hex_nibble
+  mov dh, bl
+  shl dh, 4
+  shr dh, 4
+  mov al, dh
+  call print_hex_nibble
+  pop dx
+  pop bx
+  pop ax
+  pop es
+  ret
+
+print_hex_nibble:
+  ; Write a colored hex digit
+  ; to the screen in VGA 80x25 text mode.
+  ; Requires ES set to the text buffer
+  ; starting address.
+  ;
+  ; Arguments:
+  ;   AH = Color.
+  ;   AL = Hex digit.
+  ;   DI = Text buffer offset. 2 per char.
+  ;
+  ; Returns:
+  ;   DI = Initial DI incremented by two.
+  push ax
+  cmp al, 9
+  jbe .num
+  sub al, 0xa
+  add al, 'a'
+  jmp .print
+  .num:
+    add al, '0'
+  .print:
+    call print_char
+  pop ax
+  ret
 
 [bits 16]
 print_char:
