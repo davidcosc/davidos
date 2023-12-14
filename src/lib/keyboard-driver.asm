@@ -48,10 +48,7 @@ keyboard_isr:
   ; Use the install_keyboard_driver to set
   ; this isr up in the ivt.
   cli
-  push dx
-  push ax
-  push bx
-  push ds
+  pusha
   xor ax, ax
   mov ds, ax
   mov dx, PS2_CONTROLLER_DATA_IO_PORT
@@ -69,10 +66,7 @@ keyboard_isr:
     mov word dx, PIC_8259A_EOI_PORT
     mov byte al, PIC_8259A_EOI_COMMAND
     out byte dx, al
-  pop ds
-  pop bx
-  pop ax
-  pop dx
+  popa
   sti
   iret
 
