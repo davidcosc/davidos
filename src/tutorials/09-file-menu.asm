@@ -8,10 +8,10 @@
 [bits 16]
 main:
   ; Setup screen and interrupts.
-  call paint_screen_red
-  call hide_cursor
+  call load_driver_and_file_menu_sectors
   call set_up_interrupts
-  call load_file_menu_sectors
+  call hide_cursor
+  call paint_screen_red
   .loop:
     call render_file_menu
     hlt
@@ -33,14 +33,14 @@ main:
       add bx, file_menu
       xor ax, ax
       mov byte al, [bx]
-      mov word di, 0x8200                  ; We want to load the sector at the end of our file menu sector two.
+      mov word di, 0x8400                  ; We want to load the sector at the end of our file menu sector two.
       call read_sector
       xor bx, bx                           ; Reset argument registers to zero.
       xor ax, ax                           ; Reset argument registers to zero.
       xor di, di                           ; Reset argument registers to zero.
       ; Print file sector message.
       mov byte ah, 0x40
-      mov word bx, 0x8200
+      mov word bx, 0x8400
       mov word di, TEXT_BUFFER_ROW_SIZE * 0xc
       call print_string
       xor bx, bx                           ; Reset argument registers to zero.
@@ -67,27 +67,39 @@ set_up_interrupts:
   pop bx
   ret
 
-load_file_menu_sectors:
+load_driver_and_file_menu_sectors:
   push ax
   push di
   mov word ax, 0x0001
   mov word di, 0x7e00                      ; We want to load the sector at the end of our bootsector.
   call read_sector
   mov word ax, 0x0002
-  mov word di, 0x8000                      ; We want to load the sector at the end of file menu one sector.
+  mov word di, 0x8000                      ; We want to load the sector at the end of our bootsector.
+  call read_sector
+  mov word ax, 0x0003
+  mov word di, 0x8200                      ; We want to load the sector at the end of file menu one sector.
   call read_sector
   pop di
   pop ax
   ret
 
-%include "../lib/vga-driver.asm"
+
 %include "../lib/ata-driver.asm"
 %include "../lib/pic-driver.asm"
-%include "../lib/keyboard-driver.asm"
+
 
 padding:
   times 510-(padding-main) db 0x00
   dw 0xaa55
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Driver sector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+driver_sector:
+  %include "../lib/vga-driver.asm"
+  %include "../lib/keyboard-driver.asm"
+driver_padding:
+  times 512-(driver_padding-driver_sector) db 0x00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; File menu sectors ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -280,8 +292,8 @@ selected_file:
 
 file_menu:
   db 0x02
-  db 'File 1', 0x00, 0x00, 0x03, 0x01
-  db 'File 2', 0x00, 0x00, 0x04, 0x02
+  db 'File 1', 0x00, 0x00, 0x04, 0x01
+  db 'File 2', 0x00, 0x00, 0x05, 0x02
 
 file_menu_sector_padding:
   times 1024-(file_menu_sector_padding-render_file_menu) db 0x00
