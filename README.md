@@ -315,10 +315,23 @@ To signal to the drive, that we would like to use LBA for data transfer, we have
 
 Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
 
+## 5 System calls
+
+At this point we have set up all the drivers we are going to use for our operating system. Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled game binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
+
+System calls aka Syscalls are a programmatic way in which a computer program requests a service from the operating system. These services can range from accessing hard disks to creating new processes. Syscalls provide an interface between user programs and the operating system.
+
+The architecture of modern computer systems usually involves a security model. For example, the "rings model" specifies multiple privilidge levels under which software might be executed. The operating system usually runs under the highest priviledge level, while user programs run under a lower one. Usually programs only have access to services with the same priviledge level. Syscalls allow user space programs to request access to higher level operating system services.
+
+Syscalls are often initialized via interrupts. One reason for this is, that an interrupt automatically places into an elevated priviledges state. Control is passed to the kernel.
+
+In older Linux systems interrupt 0x80 was used for handling all syscalls. Based on a syscall number passed in EAX and arguments passed in other registers, the INT 0x80 ISR switched between calling other routines. These other routines contained the actual syscall logic. In modern x86 systems a new SYSCALL instruction was implemented, so the old INT 0x80 mechanism became obsolete.
+
+We can not use the SYSCALL instruction in real mode. We are going to set up an INT 0x80 syscall ISR to handle our vga driver routines. This way our games can use them via this interrupt. The scode can be found in "./lib/syscall.asm".
 
 ## 5 File menu
 
-At this point we have set up all the drivers we are going to use for our operating system. Before we start developing our games, we need to add one more piece to the puzzle. We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/07-file-menu.asm".
+Before we start developing our games, we need to add one more piece to the puzzle. We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/07-file-menu.asm".
 
 
 ## 6 Putting it all together

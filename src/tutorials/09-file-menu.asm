@@ -7,32 +7,13 @@
 [org 0x7c00]
 [bits 16]
 main:
-  ; Setup empty screen.
+  ; Setup screen and interrupts.
   call paint_screen_red
   call hide_cursor
-  ; Setup interrupts and keyboard ISR.
-  mov bh, 0x20                             ; Master pic interrupt offset.
-  mov bl, 0x70                             ; Slave pic interrupt offset.
-  call configure_pics
-  mov bh, 11111101b
-  mov bl, 11111111b
-  call mask_interrupts
-  mov bx, 0x0084
-  call install_keyboard_driver
-  ; Read file menu sector one from disk.
-  mov ax, 0x0001
-  mov di, 0x7e00                           ; We want to load the sector at the end of our bootsector.
-  call read_sector
-  ; Read file menu sector two from disk.
-  mov ax, 0x0002
-  mov di, 0x8000                           ; We want to load the sector at the end of file menu one sector.
-  call read_sector
+  call set_up_interrupts
+  call load_file_menu_sectors
   .loop:
-    xor di, di
-    ; Setup file menu.
-    call render_file_menu_header
-    call render_files
-    call render_file_menu_footer
+    call render_file_menu
     hlt
     mov word dx, [pressed_key_buffer]
     mov word [pressed_key_buffer], 0x0000  ; Clear pressed key buffer.
@@ -44,22 +25,26 @@ main:
     je .load_file
     jmp .loop
     .load_file:
-      xor bx, bx
-      xor ax, ax
       mov byte bl, [selected_file]
       dec bx
       imul bx, 0xa
       inc bx
       add bx, 0x8
       add bx, file_menu
+      xor ax, ax
       mov byte al, [bx]
-      mov di, 0x8200                       ; We want to load the sector at the end of our file menu sector two.
+      mov word di, 0x8200                  ; We want to load the sector at the end of our file menu sector two.
       call read_sector
+      xor bx, bx                           ; Reset argument registers to zero.
+      xor ax, ax                           ; Reset argument registers to zero.
+      xor di, di                           ; Reset argument registers to zero.
       ; Print file sector message.
-      mov ah, 0x40
-      mov bx, 0x8200
-      mov di, TEXT_BUFFER_ROW_SIZE * 0xc
+      mov byte ah, 0x40
+      mov word bx, 0x8200
+      mov word di, TEXT_BUFFER_ROW_SIZE * 0xc
       call print_string
+      xor bx, bx                           ; Reset argument registers to zero.
+      xor ax, ax                           ; Reset argument registers to zero.
       jmp .end
     .next_file:
       call select_next_file
@@ -68,6 +53,32 @@ main:
       call select_previous_file
     .end:
       jmp .loop
+
+set_up_interrupts:
+  push bx
+  mov byte bh, MASTER_DEFAULT_INT_OFFSET
+  mov byte bl, SLAVE_DEFAULT_INT_OFFSET
+  call configure_pics
+  mov byte bh, ENABLE_IRQ1_ONLY
+  mov byte bl, DISABLE_ALL_IRQS
+  call mask_interrupts
+  mov word bx, MASTER_DEFAULT_IRQ1_IVT_ADDRESS
+  call install_keyboard_driver
+  pop bx
+  ret
+
+load_file_menu_sectors:
+  push ax
+  push di
+  mov word ax, 0x0001
+  mov word di, 0x7e00                      ; We want to load the sector at the end of our bootsector.
+  call read_sector
+  mov word ax, 0x0002
+  mov word di, 0x8000                      ; We want to load the sector at the end of file menu one sector.
+  call read_sector
+  pop di
+  pop ax
+  ret
 
 %include "../lib/vga-driver.asm"
 %include "../lib/ata-driver.asm"
@@ -85,6 +96,12 @@ FILE_MENU_WELCOME_STARTING_LINE equ 0x2 * TEXT_BUFFER_ROW_SIZE
 FILE_MENU_ENTRY_STARTING_LINE equ 0x7 * TEXT_BUFFER_ROW_SIZE
 FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET equ TEXT_BUFFER_ROW_SIZE - 0x6
 
+render_file_menu:
+  call render_file_menu_header
+  call render_file_menu_files
+  call render_file_menu_footer
+  ret
+
 render_file_menu_header:
   push di
   push ax
@@ -98,7 +115,7 @@ render_file_menu_header:
   pop di
   ret
 
-render_files:
+render_file_menu_files:
   ; Display all files inside the file menu.
   ; The selected file is highlighted.
   ;
@@ -135,6 +152,10 @@ render_files:
   ret
 
 render_file_entry_padding_left:
+  ; Add double hash space padding.
+  ;
+  ; Returns:
+  ;   DI = Next char text buffer offset.
   push bx
   push ax
   mov ah, 0x40
@@ -145,22 +166,31 @@ render_file_entry_padding_left:
   ret
 
 render_file_entry_padding_right:
+  ; Add space double hash padding.
+  ; Requires current DI text buffer offset
+  ; value to match the beginning of a line.
   push bx
   push ax
+  push di
   add di, FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET
   mov ah, 0x40
   mov bx, file_entry_hash_padding_right
   call print_string
-  sub di, 0x6
-  sub di, FILE_MENU_ETNRY_PADDING_RIGHT_OFFSET
+  pop di
   pop ax
   pop bx
   ret
 
 render_file_menu_footer:
+  ; Returns:
+  ;   DI = Next line text buffer offset.
+  push ax
+  push bx
   mov ah, 0x40
   mov bx, file_menu_footer
   call print_string
+  pop bx
+  pop ax
   ret
 
 color_selected_file:
@@ -245,16 +275,16 @@ file_menu_footer:
   times 160 db '#'
   db 0x00
 
+selected_file:
+  db 0x01
+
 file_menu:
   db 0x02
   db 'File 1', 0x00, 0x00, 0x03, 0x01
   db 'File 2', 0x00, 0x00, 0x04, 0x02
 
-selected_file:
-  db 0x01
-
 file_menu_sector_padding:
-  times 1024-(file_menu_sector_padding-render_file_menu_header) db 0x00
+  times 1024-(file_menu_sector_padding-render_file_menu) db 0x00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; File one sector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
