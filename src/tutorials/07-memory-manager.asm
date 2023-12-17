@@ -1,9 +1,9 @@
-; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm", "./06-read-disk.asm".
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm",
+; "./05-capture-pressed-keys.asm", "./06-read-disk.asm".
 ;
-; In this module we read additional sectors to memory dynamically. We will ask the memory manager, where to place the sectors in memory.
-; We will not hard code the destination addresses. We will use lower memory only. The lower memory map is standardized.
-; Memory space 0x07e00 to 0x7ffff is conventional memory that can be used freely. We will only use this memory space for dynamic allocation
-; through our memory manager. The manager will use the buddy system to allocate memory. We will never use more than 20 sectors of memory in our project.
+; In this module we test our first fit, implicit list memory manager. We are allocating and freeing multiple chunks, to ensure flags
+; flags are set correctly and coalescing works. We also ensure, that memors will not be assigned past the initially specified memory
+; area. We will not use memory detection. Instead we hardcode the initial memory area.
 
 %include "../os/kernel-drivers.asm"
 

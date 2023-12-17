@@ -1,3 +1,5 @@
+; This module contains routines to set up a first fit, implicit list memory manager.
+
 INITIAL_CHUNK_START_ADDRESS equ 0x8600
 BOUNDARY_SIZE_IN_BYTES equ 2
 SECTOR_PAYLOAD_SIZE_IN_BYTES equ 512

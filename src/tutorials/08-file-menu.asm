@@ -1,5 +1,6 @@
-; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm", "./05-capture-pressed-keys.asm".
-
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm",
+; "./05-capture-pressed-keys.asm", "./06-read-disk.asm".
+;
 ; In this module we will set up a file table containing two example files. We will display a menu that allows choosing between files.
 ; We will use the arrow UP and DOWN keys to traverse the menu. The currently selected file will be highlighted. We will load the
 ; currently selected file by pressing ENTER. The contents of the file will be printed to the screen.

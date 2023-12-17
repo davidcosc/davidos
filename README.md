@@ -315,9 +315,33 @@ To signal to the drive, that we would like to use LBA for data transfer, we have
 
 Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
 
-## 5 System calls
 
-At this point we have set up all the drivers we are going to use for our operating system. Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled game binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
+## 5 Memory management
+
+At this point we have developed all the drivers we are going to use for our operating system. We will use a "./os/bootsector.asm" and "./os/kernel-drivers.asm" file to set them all up from now on. Like we did in all the tutorials so far, all the required code will be read from disk to hard coded memory locations. This is fine, since we are simply setting up base functionality of our operating system.
+
+Once we get into running our games however, assigning static memory locations to load them will not be optimal.
+We might want to add more games in the future, so their number might change. Games can require different sizes of memory. We might run games in a different order, depending on what we feel like playing.
+
+Assigning each game a static memory space would require us to always adjust our operating system for every new game and hardcode a new memory location. If we wanted to add new features to a game, we might have to change the hardcoded memory location. The available memory space may not be enough to contain the adjusted game anymore. We do not want to do this manually all the time. To solve this issue, we will create a simple memory manager. Its purpose will be, to dynamically assign memory space to requesting applications.
+
+We are going to use a first fit, implicit list memory manager. Initially we will specify a memory area, that is big enough to hold up to 20 sectors of code and data. Since we are lazy, this should be enough for all the games we are ever going to make. This initial memory area will contain so called boudary tags at the bottom and top of the area. We call the bottom boundary the header and the top boundary the footer. We call the memory space inbetween the boundaries payload. This is the actual memory space, that will be provided to an application. The memory area made up of the header, footer and payload is called a chunk. The header and footer of a chunk contain the size of the payload as well as a status flag, that indicates whether the chunk is free or in use.
+
+If an application requests memory space that is smaller than currently available memory of a free chunk, that chunk is split into two chunks. One is assigned to the application and marked used or allocated. The other is appended to the first chunk. It contains the remaining memory space and is marked free. This way chunks form an implicitly doubly linked list. It can be easily traversed using the payload sizes contained in the boundaries to navigate to the next or previous chunk.
+
+Finding free space that can be allocated to a requesting application is done using first fit. We traverse the list starting at the bottom and allocate the first free chunk, that is big enought to match the request.
+
+Once a program exits, we can free the programs allocated memory. If neighboring chunks are also free, they are joined or coalesced into a single bigger free chunk. If all chunks are freed, we have returned to our initial memory list state of a single chunk spanning the entire initial memory area. The code can be found in "./tutorials/07-memory-manager.asm".
+
+
+## 6 File menu
+
+We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/08-file-menu.asm".
+
+
+## 7 System calls
+
+Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled game binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
 
 System calls aka Syscalls are a programmatic way in which a computer program requests a service from the operating system. These services can range from accessing hard disks to creating new processes. Syscalls provide an interface between user programs and the operating system.
 
@@ -327,14 +351,10 @@ Syscalls are often initialized via interrupts. One reason for this is, that an i
 
 In older Linux systems interrupt 0x80 was used for handling all syscalls. Based on a syscall number passed in EAX and arguments passed in other registers, the INT 0x80 ISR switched between calling other routines. These other routines contained the actual syscall logic. In modern x86 systems a new SYSCALL instruction was implemented, so the old INT 0x80 mechanism became obsolete.
 
-We can not use the SYSCALL instruction in real mode. We are going to set up an INT 0x80 syscall ISR to handle our vga driver routines. This way our games can use them via this interrupt. The scode can be found in "./lib/syscall.asm".
-
-## 5 File menu
-
-Before we start developing our games, we need to add one more piece to the puzzle. We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/07-file-menu.asm".
+We can not use the SYSCALL instruction in real mode. We are going to set up an INT 0x80 syscall ISR to handle our vga driver routines. This way our games can use them via this interrupt. The code can be found in "./lib/syscall.asm".
 
 
-## 6 Putting it all together
+## 8 Putting it all together
 
 We are going to set up our operating system similarly to tutorial 7. Selecting a game and pressing ENTER will run the game. We will add functionality to each game to jump back to the file menu on pressing ESC. The games itself will not be the focus of our project. We will not cover their code in detail. Each game will be placed in its own sector on the disk. This time around we are going to use separate files per sector/feature. We will assemble them separately and then chain them together into a single binary using the cat cli tool. The final code can be found inside the "./bootsector.asm", "./kernel.asm", "./games/pong.asm", "./games/tic-tac-toe.asm" and "sort-symbols.asm". The bootsector will setup our drivers and load our kernel. The kernel will setup the file menu to select and load our games. The games will contain code for exiting back to the file menu.
 
