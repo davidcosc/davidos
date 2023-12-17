@@ -217,6 +217,7 @@ free_chunk:
   pop ds
   ret
 
+[bits 16]
 print_chunks:
   push ds
   push si
