@@ -267,16 +267,3 @@ print_chunks:
   pop si
   pop ds
   ret
-
-[bits 16]
-debug_print:
-  push di
-  push ax
-  push bx
-  mov byte ah, 0x40
-  mov di, TEXT_BUFFER_ROW_SIZE * 0xc
-  call print_hex_word
-  pop bx
-  pop ax
-  pop di
-  ret
