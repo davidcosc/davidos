@@ -84,6 +84,12 @@ main:
   mov di, 0x8a0a
   call free_chunk
   call print_chunks
+  call continue_loop
+  ; Test free coalesce prev and next.
+  call paint_screen_red
+  mov di, 0x8806
+  call free_chunk
+  call print_chunks
   .loop:
     hlt
     jmp .loop
