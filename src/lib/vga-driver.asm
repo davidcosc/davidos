@@ -23,19 +23,19 @@ hide_cursor:
   ; Set the cursor location low index.
   mov word dx, CRT_CONTROLLER_INDEX_PORT
   mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX
-  out byte dx, al
+  out dx, al
   ; Set the cursor location low value.
   mov word dx, CRT_CONTROLLER_DATA_PORT
   mov al, bl                               ; Lower part of the new cursor location. The cursor location is split in two VGA registers.
-  out byte dx, al
+  out dx, al
   ; Set the cursor location high index.
   mov word dx, CRT_CONTROLLER_INDEX_PORT
   mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX
-  out byte dx, al
+  out dx, al
   ; Set the cursor location high value.
   mov word dx, CRT_CONTROLLER_DATA_PORT
   mov al, bh                               ; High part of the new cursor location.
-  out byte dx, al
+  out dx, al
   pop bx
   pop dx
   pop ax

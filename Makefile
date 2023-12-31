@@ -58,14 +58,21 @@ tut7:
 
 tut8:
 	mkdir -p bin
-	cd src/tutorials/; nasm 08-file-menu.asm -f bin -o 08-file-menu.bin
-	mv src/tutorials/08-file-menu.bin bin/
-	od -t x1 -A n bin/08-file-menu.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/08-file-menu.bin,index=0,if=ide
+	cd src/tutorials/; nasm 08-task-scheduler.asm -f bin -o 08-task-scheduler.bin
+	mv src/tutorials/08-task-scheduler.bin bin/
+	od -t x1 -A n bin/08-task-scheduler.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/08-task-scheduler.bin,index=0,if=ide
 
 tut9:
 	mkdir -p bin
-	cd src/tutorials/; nasm 09-driver-syscalls.asm -f bin -o 09-driver-syscalls.bin
-	mv src/tutorials/09-driver-syscalls.bin bin/
-	od -t x1 -A n bin/09-driver-syscalls.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/09-driver-syscalls.bin,index=0,if=ide
+	cd src/tutorials/; nasm 09-file-menu.asm -f bin -o 09-file-menu.bin
+	mv src/tutorials/09-file-menu.bin bin/
+	od -t x1 -A n bin/09-file-menu.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/09-file-menu.bin,index=0,if=ide
+
+tut10:
+	mkdir -p bin
+	cd src/tutorials/; nasm 10-driver-syscalls.asm -f bin -o 10-driver-syscalls.bin
+	mv src/tutorials/10-driver-syscalls.bin bin/
+	od -t x1 -A n bin/10-driver-syscalls.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/10-driver-syscalls.bin,index=0,if=ide

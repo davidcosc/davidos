@@ -48,29 +48,29 @@ configure_pics:
   ; ICW1
   mov byte al, 00010001b                   ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
   mov dx, MASTER_PIC_COMANND_IO_PORT
-  out byte dx, al
+  out dx, al
   mov dx, SLAVE_PIC_COMANND_IO_PORT
-  out byte dx, al
+  out dx, al
   ; ICW2
   mov al, bh
   mov dx, MASTER_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   mov al, bl
   mov dx, SLAVE_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   ; ICW3
   mov byte al, 00000100b                   ; We expect the slave pic to be connected to the master on IRQ2 pin.
   mov dx, MASTER_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   mov byte al, 0x02                        ; We expect the slave pic to have a cascade identity of 2. It triggers IRQ2 on master.
   mov dx, SLAVE_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   ; ICW4
   mov byte al, 00000001b                   ; We want ICW4 to set x86 mode environment.
   mov dx, MASTER_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   mov dx, SLAVE_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   pop bx
   pop ax
   pop dx
@@ -99,10 +99,10 @@ mask_interrupts:
   push dx
   mov al, bh
   mov dx, MASTER_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   mov al, bl
   mov dx, SLAVE_PIC_DATA_IO_PORT
-  out byte dx, al
+  out dx, al
   pop dx
   pop ax
   sti

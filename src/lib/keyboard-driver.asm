@@ -65,7 +65,7 @@ keyboard_isr:
   .end:
     mov word dx, PIC_8259A_EOI_PORT
     mov byte al, PIC_8259A_EOI_COMMAND
-    out byte dx, al
+    out dx, al
   popa
   sti
   iret

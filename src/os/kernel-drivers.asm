@@ -16,9 +16,13 @@ set_up_interrupts:
 
 [bits 16]
 load_and_jump_next_sector:
+  push di
+  push ax
   mov word ax, 0x3
   mov word di, 0x8200                           ; Starting address of the sector right after our first kernel sector.
   call read_sector
+  pop ax
+  pop di
   jmp 0x8200                                    ; Continue executing instructions in the next sector following driver sectors.
 
 %include "../lib/vga-driver.asm"

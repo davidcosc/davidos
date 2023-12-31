@@ -32,27 +32,27 @@ read_sector:
   mov es, dx
   ; Set up LBA bits 0-7.
   mov word dx, COMMAND_BLOCK_SECTOR_NUMBER_IO_PORT
-  out byte dx, al
+  out dx, al
   ; Set up LBA bits 8-15.
   mov word dx, COMMAND_BLOCK_CYLINDER_LOW_IO_PORT
   shr ax, 0x8
-  out byte dx, al
+  out dx, al
   ; Set up LBA bits 16-23.
   mov word dx, COMMAND_BLOCK_CYLINDER_HIGH_IO_PORT
   xor ax, ax
-  out byte dx, al
+  out dx, al
   ; Set up LBA mode and LBA bits 24-27.
   mov word dx, COMMAND_BLOCK_DRIVE_HEAD_IO_PORT
   or al, LBA_MODE_AND_DRIVE_ZERO
-  out byte dx, al
+  out dx, al
   ; Set numbers of sectors to read to one.
   mov word dx, COMMAND_BLOCK_SECTOR_COUNT_IO_PORT
   mov byte al, NUM_SECTORS_READ
-  out byte dx, al
+  out dx, al
   ; Send read command to drive.
   mov word dx, COMMAND_BLOCK_COMMAND_IO_PORT
   mov byte al, READ_RETRY_COMMAND
-  out byte dx, al
+  out dx, al
   .loop:
     mov word dx, COMMAND_BLOCK_STATUS_IO_PORT
     in byte al, dx
