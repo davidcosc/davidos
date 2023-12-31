@@ -16,6 +16,10 @@ main:
   mov word ax, 0x0004
   mov word di, 0x8400
   call read_sector
+  ; Mask ints apart from IRQ1.
+  mov byte bh, ENABLE_IRQ1_ONLY
+  mov byte bl, DISABLE_ALL_IRQS
+  call mask_interrupts
   ; Setup printing.
   mov ah, 0x40
   mov di, 0xb800
