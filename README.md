@@ -1,8 +1,6 @@
 # Davidos
 
-This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system that allows us to run different custom mini games. It is by no means a complete explanation or tutorial on everything that goes on in detail. It rather focuses on a subset of important concepts worth learning about.
-
-An operating system is system software that manages computer hardware and software resources. It provides common services for computer programs and acts as an interface for the user. Not only will it enable us to load our mini games from a disk, but also provide functions for displaying text on a screen, taking user input from a keyboard and running our games. Along the way we will learn about different hardware components and how to write drivers to interact with them. We will take a look at the boot process and the BIOS. We will find out how to address different parts of the system, how to use memory and handle device I/O.
+This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system. An operating system is system software that manages computer hardware and software resources. It provides common services for computer programs and acts as an interface for the user. Rather than focusing on all the nitty gritty details required for optimization and robustness of an operating system, we will focus on simple implementations in order to provide a basic understanding of some important features. Our operating system will contain basic drivers to interact with hardware such as the display or hard disk drive. It will provide simple memory management as well as multi tasking.
 
 
 ## 1 Instruction Operands
@@ -320,12 +318,10 @@ Once we have set up the drive/head register, the cylinder high, cylinder low and
 
 At this point we have developed all the drivers we are going to use for our operating system. We will use a "./os/bootsector.asm" and "./os/kernel-drivers.asm" file to set them all up from now on. Like we did in all the tutorials so far, all the required code will be read from disk to hard coded memory locations. This is fine, since we are simply setting up base functionality of our operating system.
 
-Once we get into running our games however, assigning static memory locations to load them will not be optimal.
-We might want to add more games in the future, so their number might change. Games can require different sizes of memory. We might run games in a different order, depending on what we feel like playing.
+Once we get into running user programs however, assigning static memory locations to load them will not be optimal.
+User programs can grow in size over time. Previously assigned memory spaces could not be big enough to contain them anymore. Running all user programs at the same time may not be possible due to limited memory space. We should be able to use the same memory space for different programs based on what we choose to run at that time. We will need some form of memory manager, that will allow us to dynamically assign memory space to requesting applications.
 
-Assigning each game a static memory space would require us to always adjust our operating system for every new game and hardcode a new memory location. If we wanted to add new features to a game, we might have to change the hardcoded memory location. The available memory space may not be enough to contain the adjusted game anymore. We do not want to do this manually all the time. To solve this issue, we will create a simple memory manager. Its purpose will be, to dynamically assign memory space to requesting applications.
-
-We are going to use a first fit, implicit list memory manager. Initially we will specify a memory area, that is big enough to hold up to 20 sectors of code and data. Since we are lazy, this should be enough for all the games we are ever going to make. This initial memory area will contain so called boudary tags at the bottom and top of the area. We call the bottom boundary the header and the top boundary the footer. We call the memory space inbetween the boundaries payload. This is the actual memory space, that will be provided to an application. The memory area made up of the header, footer and payload is called a chunk. The header and footer of a chunk contain the size of the payload as well as a status flag, that indicates whether the chunk is free or in use.
+We are going to use a first fit, implicit list memory manager. Initially we will specify a memory area, that is big enough to hold up to 20 sectors of code and data. For learning purposes, this should be enough for all the programs we are ever going to run. This initial memory area will contain so called boudary tags at the bottom and top of the area. We call the bottom boundary the header and the top boundary the footer. We call the memory space inbetween the boundaries payload. This is the actual memory space, that will be provided to an application. The memory area made up of the header, footer and payload is called a chunk. The header and footer of a chunk contain the size of the payload as well as a status flag, that indicates whether the chunk is free or in use.
 
 If an application requests memory space that is smaller than currently available memory of a free chunk, that chunk is split into two chunks. One is assigned to the application and marked used or allocated. The other is appended to the first chunk. It contains the remaining memory space and is marked free. This way chunks form an implicitly doubly linked list. It can be easily traversed using the payload sizes contained in the boundaries to navigate to the next or previous chunk.
 
@@ -336,12 +332,12 @@ Once a program exits, we can free the programs allocated memory. If neighboring 
 
 ## 6 File menu
 
-We need some kind of menu, that lets us select different games we want to play. One way of doing this, is to separate each game into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the game file to memory and run it. We set up a basic file table in "./tutorials/08-file-menu.asm".
+We need some kind of menu, that lets us select different programs we want to run. One way of doing this, is to separate each program into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the program file to memory and run it. We set up a basic file table in "./tutorials/08-file-menu.asm".
 
 
 ## 7 System calls
 
-Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled game binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
+Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled program binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
 
 System calls aka Syscalls are a programmatic way in which a computer program requests a service from the operating system. These services can range from accessing hard disks to creating new processes. Syscalls provide an interface between user programs and the operating system.
 
@@ -351,11 +347,4 @@ Syscalls are often initialized via interrupts. One reason for this is, that an i
 
 In older Linux systems interrupt 0x80 was used for handling all syscalls. Based on a syscall number passed in EAX and arguments passed in other registers, the INT 0x80 ISR switched between calling other routines. These other routines contained the actual syscall logic. In modern x86 systems a new SYSCALL instruction was implemented, so the old INT 0x80 mechanism became obsolete.
 
-We can not use the SYSCALL instruction in real mode. We are going to set up an INT 0x80 syscall ISR to handle our vga driver routines. This way our games can use them via this interrupt. The code can be found in "./lib/syscall.asm".
-
-
-## 8 Putting it all together
-
-We are going to set up our operating system similarly to tutorial 7. Selecting a game and pressing ENTER will run the game. We will add functionality to each game to jump back to the file menu on pressing ESC. The games itself will not be the focus of our project. We will not cover their code in detail. Each game will be placed in its own sector on the disk. This time around we are going to use separate files per sector/feature. We will assemble them separately and then chain them together into a single binary using the cat cli tool. The final code can be found inside the "./bootsector.asm", "./kernel.asm", "./games/pong.asm", "./games/tic-tac-toe.asm" and "sort-symbols.asm". The bootsector will setup our drivers and load our kernel. The kernel will setup the file menu to select and load our games. The games will contain code for exiting back to the file menu.
-
-The end?!
+We can not use the SYSCALL instruction in real mode. We are going to set up an INT 0x80 syscall ISR to handle our vga driver routines. This way our programs can use them via this interrupt. The code can be found in "./lib/syscall.asm".
