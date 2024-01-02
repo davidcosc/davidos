@@ -1,3 +1,4 @@
+; Requires "pic-driver.asm" to be set up beforehand.
 ; This module contains routines to handle keyboard key presses. It includes an isr for getting the ascii values of keys pressed as well as
 ; bootstrap routines to set up the isr in the interrupt vector table such that the keyboard hardware interrupt IRQ1 can trigger it.
 
@@ -10,27 +11,30 @@ UP_ARROW_SCAN_CODE equ 0x48
 DOWN_ARROW_SCAN_CODE equ 0x50
 
 [bits 16]
-install_keyboard_driver:
+install_keyboard_isr:
   ; Setup an interrupt vector inside the ivt
   ; to point to the keyboard_isr. After
   ; running this routine, interrupts that
   ; refer to the configured vector will
-  ; trigger the keyboard_isr.
-  ;
-  ; Arguments:
-  ;   BX = Address of the interrupt vector
-  ;        the keyboard_isr should be set to
+  ; trigger the keyboard_isr. The vector
+  ; must match IRQ 1 as specified by the
+  ; PIC.
   cli
-  push ds
+  push es
+  push di
   push ax
-  push bx
-  mov word ax, 0x0000                      ; Set up the data segment to the starting address of the ivt 0x0.
-  mov ds, ax
-  mov word [bx], keyboard_isr              ; An entry in the ivt is 4 bytes long. The first two bytes must contain the address offset of the isr.
-  mov word [bx+2], 0x0                     ; The second two bytes must contain the respective segment address. Both form the complete address to jump to.
-  pop bx
+  ; Init segments.
+  mov word di, 0x0000
+  mov es, di
+  ; Set up vector.
+  mov word di, MASTER_DEFAULT_IRQ1_IVT_ADDRESS
+  mov word ax, keyboard_isr
+  stosw
+  mov word ax, 0x0000
+  stosw
   pop ax
-  pop ds
+  pop di
+  pop es
   sti
   ret
 

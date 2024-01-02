@@ -63,8 +63,7 @@ set_up_interrupts:
   mov byte bh, ENABLE_IRQ1_ONLY
   mov byte bl, DISABLE_ALL_IRQS
   call mask_interrupts
-  mov word bx, MASTER_DEFAULT_IRQ1_IVT_ADDRESS
-  call install_keyboard_driver
+  call install_keyboard_isr
   pop bx
   ret
 

@@ -22,15 +22,14 @@ main:
   ; New line
   mov word di, TEXT_BUFFER_ROW_SIZE * 3
   ; Reinitialize pic with new irq offset.
-  mov byte bh, 0x10                        ; Master pic interrupt offset.
-  mov byte bl, 0x70                        ; Slave pic interrupt offset.
+  mov byte bh, MASTER_DEFAULT_INT_OFFSET
+  mov byte bl, SLAVE_DEFAULT_INT_OFFSET
   call configure_pics
   mov byte bh, 11111101b                   ; We want OCW1 to disable all interrupts apart from IRQ1 on master in order to be able to still use the keyboard.
   mov byte bl, 11111111b                   ; We want to mask/disable all interrupts on slave.
   call mask_interrupts
   ; Set up keyboard isr in ivt
-  mov word bx, 0x44                        ; IRQ1 ivt address.
-  call install_keyboard_driver
+  call install_keyboard_isr
   ; Repeatedly print most recently pressed key
   mov word ax, 0xb800                           ; Print char requires ES to point to text buffer starting address.
   mov es, ax
