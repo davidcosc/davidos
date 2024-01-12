@@ -9,11 +9,14 @@ load_and_set_up_task_scheduler:
   push di
   push ax
   mov word ax, 0x4
-  mov word di, 0x8400                           ; Starting address of the sector right after our first kernel sector.
+  mov word di, 0x8400
+  call read_sector
+  mov word ax, 0x5
+  mov word di, 0x8600
   call read_sector
   pop ax
   pop di
-  jmp 0x8400                                    ; Continue executing instructions in the next sector following driver sectors.
+  jmp 0x8400                                    ; Continue executing instructions in the kernel task manager sectors.
 
 %include "../lib/first-fit-implicit-list-memory-manager.asm"
 

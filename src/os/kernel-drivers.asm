@@ -18,11 +18,11 @@ load_and_set_up_memory_management:
   push di
   push ax
   mov word ax, 0x3
-  mov word di, 0x8200                      ; Starting address of the sector right after our first kernel sector.
+  mov word di, 0x8200
   call read_sector
   pop ax
   pop di
-  jmp 0x8200                               ; Continue executing instructions in the next sector following driver sectors.
+  jmp 0x8200                               ; Continue executing instructions in the kernel memory manager sectors.
 
 %include "../lib/vga-driver.asm"
 %include "../lib/pic-driver.asm"
