@@ -6,7 +6,7 @@ set_up_interrupts:
   mov byte bh, MASTER_DEFAULT_INT_OFFSET
   mov byte bl, SLAVE_DEFAULT_INT_OFFSET
   call configure_pics
-  mov byte bh, ENABLE_IRQ0_AND_IRQ1_ONLY
+  mov byte bh, ENABLE_IRQ1_ONLY
   mov byte bl, DISABLE_ALL_IRQS
   call mask_interrupts
   call install_keyboard_isr

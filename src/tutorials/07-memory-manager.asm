@@ -79,19 +79,19 @@ main:
   call malloc_chunk
   call print_chunks
   call continue_loop
-  mov di, 0x8602
+  mov di, 0x9002
   call free_chunk
   call print_chunks
   call continue_loop
   ; Test free coalesce next.
   call paint_screen_red
-  mov di, 0x8a0a
+  mov di, 0x940a
   call free_chunk
   call print_chunks
   call continue_loop
   ; Test free coalesce prev and next.
   call paint_screen_red
-  mov di, 0x8806
+  mov di, 0x9206
   call free_chunk
   call print_chunks
   .loop:
