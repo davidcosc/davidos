@@ -145,6 +145,7 @@ print_hex_word:
   pop es
   ret
 
+[bits 16]
 print_hex_nibble:
   ; Write a colored hex digit
   ; to the screen in VGA 80x25 text mode.
@@ -189,3 +190,100 @@ print_char:
   stosw
   pop ax
   ret
+
+[bits 16]
+print_registers:
+  pusha
+  push bx
+  push ax
+  push es
+  push di
+  ; Init segment.
+  mov word di, 0xb800
+  mov es, di
+  ; Print header.
+  mov byte ah, 0x40
+  mov word di, TEXT_BUFFER_ROW_SIZE * 0xc
+  mov word bx, print_registers_header_row
+  call print_string
+  ; Print DI.
+  mov word di, TEXT_BUFFER_ROW_SIZE * 0xd
+  pop bx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print ES.
+  pop bx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print DS.
+  mov bx, ds
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print SI.
+  mov bx, si
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print AX.
+  pop bx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print BX.
+  pop bx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print CX.
+  mov bx, cx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print DX.
+  mov bx, dx
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print BP.
+  mov bx, bp
+  call print_hex_word
+  ; Print separator.
+  add di, 0x2
+  mov byte al, '|'
+  call print_char
+  add di, 0x2
+  ; Print SP.
+  mov bx, sp
+  call print_hex_word
+  popa
+  ret 
+
+print_registers_header_row:
+  db 'DI   | ES   | DS   | SI   | AX   | BX   | CX   | DX   | BP   | SP   ', 0x00
