@@ -5,6 +5,7 @@
 PS2_CONTROLLER_DATA_IO_PORT equ 0x0060
 PIC_8259A_EOI_PORT equ 0x0020
 PIC_8259A_EOI_COMMAND equ 0x20
+TAB_SCAN_CODE equ 0x0f
 ESC_SCAN_CODE equ 0x01
 ENTER_SCAN_CODE equ 0x1c
 UP_ARROW_SCAN_CODE equ 0x48
@@ -51,7 +52,6 @@ keyboard_isr:
   ;
   ; Use the install_keyboard_driver to set
   ; this isr up in the ivt.
-  cli
   pusha
   xor ax, ax
   mov ds, ax
@@ -71,7 +71,6 @@ keyboard_isr:
     mov byte al, PIC_8259A_EOI_COMMAND
     out dx, al
   popa
-  sti
   iret
 
 pressed_key_buffer:
