@@ -37,7 +37,6 @@ syscall_isr:
   ;
   ; Arguments:
   ;   AX = Syscall number.
-  cli
   pusha
   cmp ax, 0x2
   je .clear_screen
@@ -66,5 +65,4 @@ syscall_isr:
     jmp .end
   .end:
   popa
-  sti
   iret
