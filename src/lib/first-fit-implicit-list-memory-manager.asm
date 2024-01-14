@@ -221,6 +221,10 @@ free_chunk:
 
 [bits 16]
 print_chunks:
+  ; Prints the implicit chunk list.
+  ;
+  ; Arguments:
+  ;   CX = Row number to start printing at.
   push ds
   push si
   push di
@@ -231,9 +235,13 @@ print_chunks:
   ; Init segment.
   mov word si, 0x0000
   mov ds, si
-  ; Init print.
-  mov word cx, TEXT_BUFFER_ROW_SIZE * 0x2
+  ; Print header row.
+  imul cx, TEXT_BUFFER_ROW_SIZE
   mov byte ah, 0x40
+  mov word bx, chunks_header_row
+  mov di, cx
+  call print_string
+  add cx, TEXT_BUFFER_ROW_SIZE
   ; First chunk.
   mov word si, INITIAL_CHUNK_START_ADDRESS
   .loop:
@@ -270,3 +278,6 @@ print_chunks:
   pop si
   pop ds
   ret
+
+  chunks_header_row:
+    db 'HdrF Pls& Ple& FtrF', 0x00

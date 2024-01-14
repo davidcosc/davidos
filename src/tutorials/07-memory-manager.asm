@@ -16,16 +16,13 @@ main:
   mov word ax, 0x0004
   mov word di, 0x8400
   call read_sector
-  ; Mask ints apart from IRQ1.
-  mov byte bh, ENABLE_IRQ1_ONLY
-  mov byte bl, DISABLE_ALL_IRQS
-  call mask_interrupts
   ; Setup printing.
   mov ah, 0x40
   mov di, 0xb800
   mov es, di
   ; Test init memory list.
   call init_memory_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop 
   ; Test add new chunk that splits current chunk and payload gets aligned from 7 to 8.
@@ -35,6 +32,7 @@ main:
   mov bx, di
   mov di, 0x9 * TEXT_BUFFER_ROW_SIZE
   call print_hex_word
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test add new chunk that exactly matches free memory.
@@ -44,11 +42,13 @@ main:
   mov bx, di
   mov di, 0x9 * TEXT_BUFFER_ROW_SIZE
   call print_hex_word
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test add new chunk that is only slightly smaller than free memory.
   call paint_screen_red
   call init_memory_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   mov word dx, 0x284a
@@ -56,11 +56,13 @@ main:
   mov bx, di
   mov di, 0x9 * TEXT_BUFFER_ROW_SIZE
   call print_hex_word
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test add new chunk but not enough free memory.
   call paint_screen_red
   call init_memory_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   call paint_screen_red
@@ -69,6 +71,7 @@ main:
   mov bx, di
   mov di, 0x9 * TEXT_BUFFER_ROW_SIZE
   call print_hex_word
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test free no coalesce.
@@ -77,27 +80,32 @@ main:
   call malloc_chunk
   call malloc_chunk
   call malloc_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   mov di, 0x9002
   call free_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test free coalesce next.
   call paint_screen_red
   mov di, 0x940a
   call free_chunk
+  mov word cx, 0x0002
   call print_chunks
   call continue_loop
   ; Test free coalesce prev and next.
   call paint_screen_red
   mov di, 0x9206
   call free_chunk
+  mov word cx, 0x0002
   call print_chunks
   .loop:
     hlt
     jmp .loop
 
+[bits 16]
 continue_loop:
   push es
   push di
@@ -136,15 +144,3 @@ memory_manager_sector:
 
 memory_manager_sector_padding:
     times 512-(memory_manager_sector_padding-memory_manager_sector) db 0x00
-
-test_sector_one:
-  db 'Hello, test sector one!', 0x00
-  .padding:
-    times 512-(.padding-test_sector_one) db 0x00
-
-test_sectors_two:
-  times 1024 db 0x00
-  .test_sectors_two_message:
-    db 'Hello, test sectors two!', 0x00
-  .padding:
-    times 512-(.padding-.test_sectors_two_message) db 0x00
