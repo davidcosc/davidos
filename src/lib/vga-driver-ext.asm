@@ -65,3 +65,42 @@ print_registers:
 
 print_registers_header_row:
   db 'DI   ES   SI   DS   AX   BX   CX   DX   BP   SP', 0x00
+
+print_stack:
+  ; Print the stack. This includes the
+  ; registers pushed as part of this
+  ; routine.
+  ;
+  ; Arguments:
+  ;   CX = Row number to start printing.
+  push es
+  push ds
+  pusha
+  ; Init segement.
+  xor si, si
+  mov ds, si
+  ; Print header.
+  mov byte ah, 0x40
+  mov di, cx
+  imul di, TEXT_BUFFER_ROW_SIZE
+  mov bx, print_stack_header_row
+  call print_string
+  ; Print stack.
+  mov di, cx
+  imul di, TEXT_BUFFER_ROW_SIZE
+  add di, TEXT_BUFFER_ROW_SIZE
+  mov si, sp
+  .loop:
+    mov bx, [si]
+    call print_hex_word
+    add di, 0x2
+    add si, 0x2
+    cmp si, bp
+    jne .loop
+  popa
+  pop ds
+  pop es
+  ret
+
+print_stack_header_row:
+  db 'DI   SI   BP   SP   BX   DX   CX   AX   DS   ES', 0x00
