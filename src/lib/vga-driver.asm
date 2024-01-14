@@ -193,6 +193,11 @@ print_char:
 
 [bits 16]
 print_registers:
+  ; Print all important register values to
+  ; the screen in VGA text mode.
+  ;
+  ; Arguments:
+  ;   CX = Row number to print to.
   pusha
   push bx
   push ax
@@ -200,11 +205,14 @@ print_registers:
   push di
   ; Print header.
   mov byte ah, 0x40
-  mov word di, TEXT_BUFFER_ROW_SIZE * 0xc
+  mov di, cx
+  imul di, TEXT_BUFFER_ROW_SIZE
   mov word bx, print_registers_header_row
   call print_string
   ; Print DI.
-  mov word di, TEXT_BUFFER_ROW_SIZE * 0xd
+  mov di, cx
+  imul di, TEXT_BUFFER_ROW_SIZE
+  add di, TEXT_BUFFER_ROW_SIZE
   pop bx
   call print_hex_word
   add di, 0x2
