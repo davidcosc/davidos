@@ -58,10 +58,10 @@ tut7:
 
 tut8:
 	mkdir -p bin
-	cd src/tutorials/; nasm 08-task-scheduler.asm -f bin -o 08-task-scheduler.bin
-	mv src/tutorials/08-task-scheduler.bin bin/
-	od -t x1 -A n bin/08-task-scheduler.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/08-task-scheduler.bin,index=0,if=ide
+	cd src/tutorials/; nasm 08-task-manager.asm -f bin -o 08-task-manager.bin
+	mv src/tutorials/08-task-manager.bin bin/
+	od -t x1 -A n bin/08-task-manager.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/08-task-manager.bin,index=0,if=ide
 
 tut9:
 	mkdir -p bin
