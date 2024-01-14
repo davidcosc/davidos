@@ -75,7 +75,7 @@ keyboard_isr:
   iret
 
 pressed_key_buffer:
-  db 0x00
+  dw 0x0000
 
 scan_code_to_ascii_map:
   ; The following bytes define a vector of
