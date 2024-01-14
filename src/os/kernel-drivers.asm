@@ -10,7 +10,6 @@ set_up_interrupts:
   mov byte bl, DISABLE_ALL_IRQS
   call mask_interrupts
   call install_keyboard_isr
-  call install_syscall_isr
   pop bx
 
 [bits 16]
@@ -25,9 +24,9 @@ load_and_set_up_memory_management:
   jmp 0x8200                               ; Continue executing instructions in the kernel memory manager sectors.
 
 %include "../lib/vga-driver.asm"
+%include "../lib/vga-driver-ext.asm"
 %include "../lib/pic-driver.asm"
 %include "../lib/keyboard-driver.asm"
-%include "../lib/syscall.asm"
 
 additional_kernel_drivers_padding:
   times 1024-(additional_kernel_drivers_padding-set_up_interrupts) db 0x00
