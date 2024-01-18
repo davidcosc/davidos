@@ -14,29 +14,27 @@ CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX equ 0x0e
 hide_cursor:
   ; Hides the cursor by placing it just
   ; outside of the displayed character
-  ; range.
+  ; range in row 26.
   push ax
   push dx
-  push bx
-  ; Store the new cursor positiong.
-  mov word bx, ROW_26
+  ; Store the new cursor position on the stack.
+  push ROW_26
   ; Set the cursor location low index.
   mov word dx, CRT_CONTROLLER_INDEX_PORT
   mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_LOW_INDEX
   out dx, al
   ; Set the cursor location low value.
   mov word dx, CRT_CONTROLLER_DATA_PORT
-  mov al, bl                               ; Lower part of the new cursor location. The cursor location is split in two VGA registers.
-  out dx, al
+  pop ax                                   ; New cursor location. It is split in two VGA registers. We send both parts separately.
+  out dx, al                               ; Send lower part first.
   ; Set the cursor location high index.
   mov word dx, CRT_CONTROLLER_INDEX_PORT
   mov byte al, CRT_CONTROLLER_TEXT_CURSOR_LOCATION_HIGH_INDEX
   out dx, al
   ; Set the cursor location high value.
   mov word dx, CRT_CONTROLLER_DATA_PORT
-  mov al, bh                               ; High part of the new cursor location.
-  out dx, al
-  pop bx
+  shr ax, 0x4                              ; High part of the new cursor location to AL.
+  out dx, al                               ; Send high part second.
   pop dx
   pop ax
   ret
