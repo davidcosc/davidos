@@ -21,15 +21,14 @@ read_sector:
   ; is specified by its LBA.
   ;
   ; Arguments:
-  ;   AX = Selected sectors LBA.
-  ;   DI = Target memory address.
-  push es
-  push dx
-  push ax
-  push di
-  ; Setup ES for disk data read.
-  mov word dx, 0x0000
-  mov es, dx
+  ;   Selected sectors LBA as word.
+  ;   Target memory address as word.
+  ;
+  ; Function prologue. Set up stack frame.
+  push bp
+  mov bp, sp
+  ; Get LBA arg.
+  mov word ax, [bp+4]
   ; Set up LBA bits 0-7.
   mov word dx, COMMAND_BLOCK_SECTOR_NUMBER_IO_PORT
   out dx, al
@@ -53,16 +52,22 @@ read_sector:
   mov word dx, COMMAND_BLOCK_COMMAND_IO_PORT
   mov byte al, READ_RETRY_COMMAND
   out dx, al
+  ; Wait for drive to get the sector ready for us.
   .loop:
     mov word dx, COMMAND_BLOCK_STATUS_IO_PORT
     in byte al, dx
-    test al, STATUS_REGISTER_DRQ_SET       ; Once DRQ is set to zero, the sector was loaded.
-    jz .loop
+    test al, STATUS_REGISTER_DRQ_SET       ; Once DRQ is set to zero, the sector is ready.
+  jz .loop
+  ; Setup ES for disk data read.
+  mov word dx, 0x0000
+  mov es, dx
+  ; Load the sector to the target address.
+  mov word di, [bp+6]                      ; Get target address arg.
   mov word cx, SECTOR_WORD_SIZE
   mov word dx, COMMAND_BLOCK_DATA_IO_PORT
   rep insw
-  pop di
-  pop ax
-  pop dx
-  pop es
+  ; Set return value.
+  mov word ax, [bp+6]
+  ; Function epilogue. Tear down stack frame.
+  pop bp
   ret

@@ -51,28 +51,35 @@ tut6:
 
 tut7:
 	mkdir -p bin
-	cd src/tutorials/; nasm 07-memory-manager.asm -f bin -o 07-memory-manager.bin
-	mv src/tutorials/07-memory-manager.bin bin/
-	od -t x1 -A n bin/07-memory-manager.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/07-memory-manager.bin,index=0,if=ide
+	cd src/tutorials/; nasm 07-capture-pressed-keys.asm -f bin -o 07-capture-pressed-keys.bin
+	mv src/tutorials/07-capture-pressed-keys.bin bin/
+	od -t x1 -A n bin/07-capture-pressed-keys.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/07-capture-pressed-keys.bin,index=0,if=ide
 
 tut8:
 	mkdir -p bin
-	cd src/tutorials/; nasm 08-task-manager.asm -f bin -o 08-task-manager.bin
-	mv src/tutorials/08-task-manager.bin bin/
-	od -t x1 -A n bin/08-task-manager.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/08-task-manager.bin,index=0,if=ide
+	cd src/tutorials/; nasm 08-memory-manager.asm -f bin -o 08-memory-manager.bin
+	mv src/tutorials/08-memory-manager.bin bin/
+	od -t x1 -A n bin/08-memory-manager.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/08-memory-manager.bin,index=0,if=ide
 
 tut9:
 	mkdir -p bin
-	cd src/tutorials/; nasm 09-file-menu.asm -f bin -o 09-file-menu.bin
-	mv src/tutorials/09-file-menu.bin bin/
-	od -t x1 -A n bin/09-file-menu.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/09-file-menu.bin,index=0,if=ide
+	cd src/tutorials/; nasm 09-task-manager.asm -f bin -o 09-task-manager.bin
+	mv src/tutorials/09-task-manager.bin bin/
+	od -t x1 -A n bin/09-task-manager.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/09-task-manager.bin,index=0,if=ide
 
 tut10:
 	mkdir -p bin
-	cd src/tutorials/; nasm 10-driver-syscalls.asm -f bin -o 10-driver-syscalls.bin
-	mv src/tutorials/10-driver-syscalls.bin bin/
-	od -t x1 -A n bin/10-driver-syscalls.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/10-driver-syscalls.bin,index=0,if=ide
+	cd src/tutorials/; nasm 10-file-menu.asm -f bin -o 10-file-menu.bin
+	mv src/tutorials/10-file-menu.bin bin/
+	od -t x1 -A n bin/10-file-menu.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/10-file-menu.bin,index=0,if=ide
+
+tut11:
+	mkdir -p bin
+	cd src/tutorials/; nasm 11-driver-syscalls.asm -f bin -o 11-driver-syscalls.bin
+	mv src/tutorials/11-driver-syscalls.bin bin/
+	od -t x1 -A n bin/11-driver-syscalls.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/11-driver-syscalls.bin,index=0,if=ide
