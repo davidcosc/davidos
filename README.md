@@ -102,6 +102,10 @@ x86 CPUs use multiple segment registers for different purposes.
 
 Based on the type of instruction, a different segment register might be used to store or retrieve data. For example the address of the next code instruction in memory is calculated using the code segment register CS and the instruction byte offset, while label addresses are based on the data segment register DS in combination with the label offset. Instructions manipulating the stack use the stack segment register SS. For an example take a look at "./tutorials/02-rm-addressing.asm".
 
+If we attempt to access data in memory using and illegal register, we will run into an "invalid effective address" error. To prevent this from happening beforehand, here is a list of registers that are good to use.
+
+![valid-dereferencing-registers](./images/valid-dereferencing-registers.png)
+
 
 ## 4 Hardware
 
@@ -191,19 +195,11 @@ Initially the VGA card is set to a 80 x 25, 16 color text mode. We will not go i
 
 ![ibm-standard-vga-display-modes](./images/ibm-standard-vga-display-modes.png)
 
-VGA devices have over 300 internal registers. The technical CLGD documentation contains detailed information about all of them. It can be found inside the "docs" directory.
+VGA has special video buffer registers that are directly mapped to memory. The frame buffer contains a bitmap that drives the video display. It is a memory buffer containing data representing all pixels in a complete video frame.
 
-It is not feasable to map all registers to the I/O or memory address space. To cope many registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
+The text buffer abstracts away some of the complexity. We do not have to set every single pixel individually. It allows us to only store information about a character and its attributes like foreground and background color in main memory. The VGA hardware then translates this information into the respective pixel data. In text mode the screen is split into a grid of characters, usually 80x25 or 40x25. For simplicity, we can think of the grid in terms of lines and columns.
 
-Writing to a register turns into a two step process. First we write the index of the register we would like to access to the I/O port of the index register. Then we write the value we would like to set this register to, to the I/O port of the data register.
-
-The text mode cursor can be manipulated this way. In "./tutorials/04-display-text-vga.asm" we will hide the cursor by moving it outside of the displayed area.
-
-The VGA screen buffers are directly mapped to memory. The frame buffer contains a bitmap that drives the video display. It is a memory buffer containing data representing all pixels in a complete video frame. Historically mapping every single pixel to main memory was quite expensive. RAM back then was scarce. 
-
-The text buffer addresses this problem. It is an abstraction, that allows us to only store information about a character and its attributes like foreground and background color in main memory. The VGA hardware then translates this information into the respective pixel data. In text mode the screen is split into a grid of characters, usually 80x25 or 40x25. For simplicity, we can think of the grid in terms of lines and columns.
-
-The memory mapped text buffer uses 2 bytes to represent each character in the grid. They contain the following information.
+The text buffer uses 2 bytes to represent each character in the grid. They contain the following information.
 
 ![text-buffer-char-representation](./images/text-buffer-char-representation.png)
 
@@ -213,7 +209,15 @@ We can choose between 16 colors.
 
 The first two bytes of the buffer represent the top and left most character in the grid, aka line 1, column 1. The second two bytes represent the character in line 1, olumn 2. The last two bytes of the buffer represent the character in line 25, column 80. 
 
-In "./tutorials/04-display-text-vga.asm" we will use the text buffer to write to the screen.
+In "./tutorials/04-display-text-and-numbers-vga.asm" we will use the text buffer to write to the screen.
+
+VGA devices have over 300 internal registers. The technical CLGD documentation contains detailed information about all of them. It can be found inside the "docs" directory.
+
+It is not feasable to map all registers to the I/O or memory address space. To cope many I/O space registers are indexed. A block of registers comes with two additional registers. The first is an index register whose only purpose is to to store the index of the specific register, we would like to access inside the block. The second is a data register containing the value of the register referenced by the index register.
+
+Writing to a register turns into a two step process. First we write the index of the register we would like to access to the I/O port of the index register. Then we write the value we would like to set this register to, to the I/O port of the data register.
+
+The text mode cursor can be manipulated this way. In "./tutorials/05-cursor-vga.asm" we will move the cursor to different places on the screen.
 
 
 ### 4.4 8259A PIC
