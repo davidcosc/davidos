@@ -220,26 +220,51 @@ Writing to a register turns into a two step process. First we write the index of
 The text mode cursor can be manipulated this way. In "./tutorials/05-cursor-vga.asm" we will move the cursor to different places on the screen.
 
 
-### 4.4 8259A PIC
+### 4.4 ATA Controller
 
-In the previous example, all communication between the CPU and the VGA card was initialzied by the CPU. This approach makes a lot of sense for a display device. We are never going to use the display as an input device. But what if we wanted to change something in our system or program while it is already running. We might want to input some commands using the keyboard for example. In that case we would need a mechanism for detecting that a key was pressed and then act on it. Early computer systems used a mechanism called polling to achieve this. The CPU would periodically test every single input device in sequence and effectively ask each one, if it needs servicing. With every additional device we need to test, this polling cycle becomes more inefficient.
+We successfully managed to create our first driver. Even though it is a very simple driver, we still wrote quite a bit of assembly code. We are going to write a lot more. Before we can do so however, we have to address a problem we are going to run into soon. Our programs will outgrow the 512 byte boundary of the bootsector. So far the BIOS conveniently loaded this sector into memory for us. It is up to us, to load additional sectors of code and data from the hard disk. We want to continue running lots and lots more code. We will continue by writing an ATA disk driver.
+
+The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. ATA supports up to two drives being connected in a daisy chain. Drives are selected by a DRV bit, specifying drive 0 or drive 1. A drive can operate in either of two modes, cylinder head sector (CHS) or logical block addressing (LBA) mode.
+
+We are going to use LBA. LBA splits disk space into 0 to n linear blocks of data. A block or sector is 512 bytes in size. If our drive contains a bootsector, it is located at logical block address 0. The next sector would be LBA 1 and so on.
+
+Reading sectors from an ATA drive can be done in several ways. We are going to use programmed input/output (PIO). PIO is a means of data transfer via the host processor. The drive does not write data directly to memory (DMA), but "routes" it through the CPU. We are going to use the PIO data in command "read sector(s)" specifically. To execute this command, we go through the following process.
+
+![pio-read](./images/pio-read.png)
+
+The base I/O port for the command block registers according to the ISA is 0x1f0. The base address maps directly to the data register. The command register offsets are as follows.
+
+![command-block-registers](./images/command-block-registers.png)
+
+The error register would be I/O port 0x1f1. The sector count register would be I/O port 0x1f2 and so on.
+
+To signal to the drive, that we would like to use LBA for data transfer, we have to set the data/head register a certain way.
+
+![drive-head-register](./images/drive-head-register.png)
+
+Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
 
 
-#### 4.4.1 Interrupts
+### 4.5 8259A PIC
+
+So far, all communication between the CPU and the VGA card or ATA controller was initialzied by the CPU. This makes a lot of sense for a output devices without any user interaction. We are never going to use the display as an input device. But what if we wanted to change something in our system or program while it is already running. We might want to input some commands using the keyboard for example. In that case we would need a mechanism for detecting that a key was pressed and then act on it. Early computer systems used a mechanism called polling to achieve this. The CPU would periodically test every single input device in sequence and effectively ask each one, if it needs servicing. With every additional device we need to test, this polling cycle becomes more inefficient.
+
+
+#### 4.5.1 Interrupts
 
 A more desirable method would be one, where the input device would actively notify the CPU, that it needs servicing. The CPU could continue running the main program. It would only stop to do so, once a servicing request from a peripheral device is received. This method is called interrupt.
 
 The signal sent to the CPU by the input device is called an interrupt request (IRQ). It tells the CPU to complete whatever instruction it is currently executing and then switch to a new routine, that will service the requesting device. The new routine is called an interrupt service routine (ISR).
 
 
-#### 4.4.2 Programmable interupt controller (PIC)
+#### 4.5.2 Programmable interupt controller (PIC)
 
 The PIC functions as an overall manager in an interrupt driven system. Input devices can be connected to the PICs interupt lines. The PIC accepts IRQs of the connected devices. It then determines which of the incoming requests is of the highest importance/priority and issues an interrupt to the CPU.
 
 ![interrupts-and-pic](./images/interrupts-and-pic.png)
 
 
-#### 4.4.3 Interrupt vector table (IVT)
+#### 4.5.3 Interrupt vector table (IVT)
 
 After issuing an interrupt to the CPU, the PIC must somehow input information into the CPU that can point the program counter to the ISR associated with the requesting device. This pointer is an address in a vectoring table. In real mode this table is called the interrupt vector table (IVT). An entry in this table is called an interrupt vector. The pointer passed to the CPU by the PIC is the starting address of an interrupt vector. While the actual interrupt signal is sent to the CPU via the interrupt line, the interrupt vector address is sent via the normal data bus. The specifc interrupt vector address the PIC sends to the CPU for each IRQ can be configured on the PIC side.
 
@@ -251,14 +276,14 @@ The names of 8 interrupt vectors starts with IRQ0 to IRQ7. These are the vectors
 
 As we can see apart from the hardware interrupts, there are many other vectors inside the IVT. Some point to routines that should be executed once the CPU runs into a certain error. The first vectors in the IVT are usually reserved for such routines. Others are routines that should be run for so called software interrupts. These are interrupts, that are triggered explicitly from within our programs using the INT instruction. In tutorial 1 we used software interrupt 0x10 to display text on the screen. We will not go into detail about software interrupts for this project though.
 
-#### 4.4.4 8259A specifics
+#### 4.5.4 8259A specifics
 
 All details about the 8259A can be found in the respective documentation inside the "docs" directory. The 8259A PIC has 8 interrupt lines, IR0 till IR7. It can be extended by connecting up to eight slave 8259As to one master 8259A. This results in up to 64 interrupt levels or requests. In our qemu system we have 2 connected/cascaded 8259As for a total of 15 different interrupts. One interrupt line on the first PIC is used for the connection to the second one. The master PIC receives interrupts from the slave PIC on this line. Both PICs are connected to the ISA bus.
 
 The master and slave PICs can be addressed using two I/O ports each. They can be used by the CPU to send so called initialization command words (ICW)s and operation command words (OCWs) to the PICs. The master PIC uses I/O ports 0x20 and 0x21. The slave PIC uses 0xa0 and 0xa1.
 
 
-#### 4.4.5 Programming the 8259A
+#### 4.5.5 Programming the 8259A
 
 To configure the 8259A for use in an x86 system, we have to pass it 4 initialization command words (ICWs) in sequence. While ICW1 is sent to I/O port 0x20/0xa0, ICW2 to ICW4 are sent to I/O port 0x21/0xa1. ICW3 and ICW4 may be optional depending on the selected configuration.
 
@@ -289,33 +314,11 @@ ICW4 sets different PIC modes, i.e. 8086 mode.
 Code for a full example configuration of the 8259A PIC for use with a keyboard ISR can be found in "./tutorials/05-capture-pressed-keys.asm".
 
 
-### 4.5 Keyboard
+### 4.6 Keyboard
 
 In "./tutorials/05-capture-pressed-keys.asm" we configure the PIC to have a single active interrupt line for IRQ1. Usually they keyboard device is connected to IR1 on the master PIC, which is also the case for our qemu setup. Each time a key is pressed, the keyboard triggers IRQ1 on the PIC. The keyboard has registers holding the so called scan codes of the currently pressed keys. They are mapped to standardized I/O port 0x60. Once a keypress generates an interrupt, further keypresses will not generate another one until they keyboard receives an end of intterupt (EOI) signal via I/O port 0x61.
 
 We can write an ISR to read the scan code of the currently pressed key, send an EOI and return the scan code to the main program. We then have to translate the scan code to an ASCII code. To do this we use a map. Based on the keyboard layout we want to use, assign different ASCII values for each scan code. We can see this in action in the second part of tutorial 5.
-
-### 4.6 ATA Controller
-
-The AT (Bus) Attachment aka ATA interface standard defines an integrated bus interface between disk drives and host processors. It consists of a compatible register set and a 40-pin connector and its associated signals. Its primary feature is a direct connection/attachment to the ISA bus aka the AT bus, hence the name ATA. ATA supports up to two drives being connected in a daisy chain. Drives are selected by a DRV bit, specifying drive 0 or drive 1. A drive can operate in either of two modes, cylinder head sector (CHS) or logical block addressing (LBA) mode.
-
-We are going to use LBA. LBA splits disk space into 0 to n linear blocks of data. A block or sector is 512 bytes in size. If our drive contains a bootsector, it is located at logical block address 0. The next sector would be LBA 1 and so on.
-
-Reading sectors from an ATA drive can be done in several ways. We are going to use programmed input/output (PIO). PIO is a means of data transfer via the host processor. The drive does not write data directly to memory (DMA), but "routes" it through the CPU. We are going to use the PIO data in command "read sector(s)" specifically. To execute this command, we go through the following process.
-
-![pio-read](./images/pio-read.png)
-
-The base I/O port for the command block registers according to the ISA is 0x1f0. The base address maps directly to the data register. The command register offsets are as follows.
-
-![command-block-registers](./images/command-block-registers.png)
-
-The error register would be I/O port 0x1f1. The sector count register would be I/O port 0x1f2 and so on.
-
-To signal to the drive, that we would like to use LBA for data transfer, we have to set the data/head register a certain way.
-
-![drive-head-register](./images/drive-head-register.png)
-
-Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
 
 
 ## 5 Memory management
