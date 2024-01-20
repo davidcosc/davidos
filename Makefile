@@ -30,17 +30,17 @@ tut3:
 
 tut4:
 	mkdir -p bin
-	cd src/tutorials/; nasm 04-display-text-vga.asm -f bin -o 04-display-text-vga.bin
-	mv src/tutorials/04-display-text-vga.bin bin/
-	od -t x1 -A n bin/04-display-text-vga.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/04-display-text-vga.bin,index=0,if=ide
+	cd src/tutorials/; nasm 04-display-text-and-numbers-vga.asm -f bin -o 04-display-text-and-numbers-vga.bin
+	mv src/tutorials/04-display-text-and-numbers-vga.bin bin/
+	od -t x1 -A n bin/04-display-text-and-numbers-vga.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/04-display-text-and-numbers-vga.bin,index=0,if=ide
 
 tut5:
 	mkdir -p bin
-	cd src/tutorials/; nasm 05-capture-pressed-keys.asm -f bin -o 05-capture-pressed-keys.bin
-	mv src/tutorials/05-capture-pressed-keys.bin bin/
-	od -t x1 -A n bin/05-capture-pressed-keys.bin
-	qemu-system-x86_64 -drive format=raw,file=bin/05-capture-pressed-keys.bin,index=0,if=ide
+	cd src/tutorials/; nasm 05-cursor-vga.asm -f bin -o 05-cursor-vga.bin
+	mv src/tutorials/05-cursor-vga.bin bin/
+	od -t x1 -A n bin/05-cursor-vga.bin
+	qemu-system-x86_64 -drive format=raw,file=bin/05-cursor-vga.bin,index=0,if=ide
 
 tut6:
 	mkdir -p bin
