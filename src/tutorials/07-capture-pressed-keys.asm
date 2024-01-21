@@ -1,53 +1,80 @@
-; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-vga.asm".
+; Prerequisites: "./01-basics.asm", "./02-rm-addressing.asm", "./03-stack.asm", "./04-display-text-and-numbers-vga.asm",
+; "./05-cursor-vga.asm", "./06-read-disk.asm".
 ;
 ; In this module we will reconfigure the 8259A PIC. We will disable all IRQs apart from IRQ1. We will set up a
 ; keyboard ISR for IRQ1 at INT 33. Pressed keys will be printed to the screen.
 
-MAC_FIRST_VISIBLE_ROW equ TEXT_BUFFER_ROW_SIZE * 2
-
 [org 0x7c00]
 [bits 16]
-main:
+bootsector:
   ; Set up stack to grow down from 0x0000:0x7c00.
   mov word bp, 0x7c00                           
   mov sp, bp
+  ; Load additional drivers.
+  push 0x7e00                              ; We want to load the sector at the end of our bootsector. This way label offsets work.
+  push 0x0001                              ; We want to read sector number 2. We start counting sectors at zero.
+  call read_sector
+  add sp, 0x4                              ; Clean up stack.
+  push 0x8000                              ; We want to load the sector at the end of the previous sector. This way label offsets work.
+  push 0x0002                              ; We want to read sector number 3. We start counting sectors at zero.
+  call read_sector
+  add sp, 0x4                              ; Clean up stack.
   ; Setup empty screen.
-  call paint_screen_red
-  call hide_cursor
+  push 0x3000                              ; Pass color and nil char arg.
+  call print_whole_screen
+  add sp, 0x2                              ; Clean up stack.
   ; Display hello world.
-  mov word di, MAC_FIRST_VISIBLE_ROW
-  mov byte ah, 0x42                        ; Select color green on red.
-  mov word bx, press_key_string            ; Set starting address of the string to print.
-  call print_string
+  push TEXT_BUFFER_ROW_SIZE * 0x0002       ; Pass offset arg.
+  push 0x3000                              ; Pass color and nil char arg.
+  push press_key_string                    ; Pass press key string address arg.
+  call print_string_cursor
+  add sp, 0x6                              ; Clean up stack
   ; New line
-  mov word di, TEXT_BUFFER_ROW_SIZE * 3
+  push ax                                  ; Pass offset arg.
+  call set_new_line_cursor
+  add sp, 0x2                              ; Clean up stack.
+  ; Save offset for later printing.
+  push ax
   ; Reinitialize pic with new irq offset.
-  mov byte bh, MASTER_DEFAULT_INT_OFFSET
-  mov byte bl, SLAVE_DEFAULT_INT_OFFSET
+  push SLAVE_DEFAULT_INT_OFFSET            ; Pass slave offset arg.
+  push MASTER_DEFAULT_INT_OFFSET           ; Pass master offset arg.
   call configure_pics
-  mov byte bh, 11111101b                   ; We want OCW1 to disable all interrupts apart from IRQ1 on master in order to be able to still use the keyboard.
-  mov byte bl, 11111111b                   ; We want to mask/disable all interrupts on slave.
+  add sp, 0x4                              ; Clean up stack.
+  ; Enable IRQ1 only.
+  push DISABLE_ALL_IRQS                    ; Pass slave mask arg.
+  push ENABLE_IRQ1_ONLY                    ; Pass master mask arg. 
   call mask_interrupts
+  add sp, 0x4                              ; Clean up stack.
   ; Set up keyboard isr in ivt
   call install_keyboard_isr
   ; Repeatedly print most recently pressed key
-  mov word ax, 0xb800                           ; Print char requires ES to point to text buffer starting address.
-  mov es, ax
+  hlt                                      ; Halt CPU until we press the first key.
+  pop ax
   .loop:
-    mov word ax, [pressed_key_buffer]
-    mov byte ah, 0x42
-    call print_char
-    dec di
-    dec di
+    push ax                                ; Pass offset arg.
+    mov word ax, [pressed_key_buffer]      ; Get pressed key.
+    mov byte ah, 0x30                      ; Combine color and pressed key char.
+    push ax                                ; Pass color and pressed key char arg.
+    call print_char_cursor
+    add sp, 0x4                            ; Clean up stack.
+    sub ax, 0x2                            ; Reset offset so we keep printing in the same place.
     jmp .loop
-
-%include "../lib/vga-driver.asm"
-%include "../lib/pic-driver.asm"
-%include "../lib/keyboard-driver.asm"
 
 press_key_string:
   db 'Press any key from [a to z] or [1 to 9]:', 0x0
   
-padding:       
-  times 510-(padding-main) db 0x00     
+%include "../lib/ata-driver.asm"
+
+bootsector_padding:       
+  times 510-(bootsector_padding-bootsector) db 0x00     
   dw 0xaa55
+
+additional_drivers:
+
+%include "../lib/vga-base-driver.asm"
+%include "../lib/vga-cursor-driver.asm"
+%include "../lib/pic-driver.asm"
+%include "../lib/keyboard-driver.asm"
+
+additional_drivers_padding:
+  times 1024-(additional_drivers_padding-additional_drivers) db 0x00

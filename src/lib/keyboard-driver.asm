@@ -20,11 +20,12 @@ install_keyboard_isr:
   ; trigger the keyboard_isr. The vector
   ; must match IRQ 1 as specified by the
   ; PIC.
+  ; We want hardware interrupts disabled while manipulating IVT entries for hardware interrupts.
   cli
-  push es
-  push di
-  push ax
-  ; Init segments.
+  ; Function prologue. Set up stack frame.
+  push bp
+  mov bp, sp
+  ; Init segment.
   mov word di, 0x0000
   mov es, di
   ; Set up vector.
@@ -33,9 +34,9 @@ install_keyboard_isr:
   stosw
   mov word ax, 0x0000
   stosw
-  pop ax
-  pop di
-  pop es
+  ; Function epilogue. Tear down stack frame.
+  pop bp
+  ; Restart hardware interrupts.
   sti
   ret
 
@@ -52,7 +53,11 @@ keyboard_isr:
   ;
   ; Use the install_keyboard_driver to set
   ; this isr up in the ivt.
+  ;
+  ; ISR function prologue. Set up stack frame and save registers.
   pusha
+  mov bp, sp
+  ; Handle keyboard interrupt.
   xor ax, ax
   mov ds, ax
   mov dx, PS2_CONTROLLER_DATA_IO_PORT
@@ -70,6 +75,7 @@ keyboard_isr:
     mov word dx, PIC_8259A_EOI_PORT
     mov byte al, PIC_8259A_EOI_COMMAND
     out dx, al
+  ; ISR function epilogue. Tear down stack frame and restore registers.
   popa
   iret
 

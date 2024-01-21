@@ -4,6 +4,8 @@ MASTER_PIC_COMANND_IO_PORT equ 0x0020
 MASTER_PIC_DATA_IO_PORT equ 0x0021
 SLAVE_PIC_COMANND_IO_PORT equ 0x00A0
 SLAVE_PIC_DATA_IO_PORT equ 0x00A1
+ICW1_CASC_EDGE_WITH_ICW4 equ 00010001b
+ICW4_X86_MODE equ 00000001b
 MASTER_DEFAULT_INT_OFFSET equ 0x20
 SLAVE_DEFAULT_INT_OFFSET equ 0x70
 IVT_ENTRY_BYTE_SIZE equ 4
@@ -40,23 +42,25 @@ configure_pics:
   ; address 0x44.
   ;
   ; Arguments:
-  ;   BH = ICW2 for master pic.
-  ;   BL = ICW2 for slave pic.
+  ;   ICW2 for master pic as word.
+  ;   ICW2 for slave pic as word.
+  ;
+  ; We want hardware interrupts disabled while manipulating the hardware responsible for handling them.
   cli
-  push dx
-  push ax
-  push bx
+  ; Function prologue. Set up stack frame.
+  push bp
+  mov bp, sp
   ; ICW1
-  mov byte al, 00010001b                   ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
+  mov byte al, ICW1_CASC_EDGE_WITH_ICW4    ; We want 2 cascading, edge triggered PICs. In x86 ICW4 is required and the call address interval ignored.
   mov dx, MASTER_PIC_COMANND_IO_PORT
   out dx, al
   mov dx, SLAVE_PIC_COMANND_IO_PORT
   out dx, al
   ; ICW2
-  mov al, bh
+  mov word ax, [bp+4]                      ; Get master ICW2 arg.
   mov dx, MASTER_PIC_DATA_IO_PORT
   out dx, al
-  mov al, bl
+  mov word ax, [bp+6]                      ; Get slave ICW2 arg.
   mov dx, SLAVE_PIC_DATA_IO_PORT
   out dx, al
   ; ICW3
@@ -67,14 +71,14 @@ configure_pics:
   mov dx, SLAVE_PIC_DATA_IO_PORT
   out dx, al
   ; ICW4
-  mov byte al, 00000001b                   ; We want ICW4 to set x86 mode environment.
+  mov byte al, ICW4_X86_MODE               ; We want ICW4 to set x86 mode environment.
   mov dx, MASTER_PIC_DATA_IO_PORT
   out dx, al
   mov dx, SLAVE_PIC_DATA_IO_PORT
   out dx, al
-  pop bx
-  pop ax
-  pop dx
+  ; Function epilogue. Tear down stack frame.
+  pop bp
+  ; Restart hardware interrupts.
   sti
   ret
 
@@ -93,18 +97,23 @@ mask_interrupts:
   ; IRQ1, provide a OCW1 of 11111101b.
   ;
   ; Arguments:
-  ;   BH = OCW1 for the master pic.
-  ;   BL = OCW1 for the slave pic.
+  ;   OCW1 for the master pic as word.
+  ;   OCW1 for the slave pic as word.
+  ;
+  ; We want hardware interrupts disabled while manipulating the hardware responsible for handling them.
   cli
-  push ax
-  push dx
-  mov al, bh
+  ; Function prologue. Set up stack frame.
+  push bp
+  mov bp, sp
+  ; Mask interrupts.
+  mov word ax, [bp+4]
   mov dx, MASTER_PIC_DATA_IO_PORT
   out dx, al
-  mov al, bl
+  mov word ax, [bp+6]
   mov dx, SLAVE_PIC_DATA_IO_PORT
   out dx, al
-  pop dx
-  pop ax
+  ; Function epilogue. Tear down stack frame.
+  pop bp
+  ; Restart hardware interrupts.
   sti
   ret
