@@ -53,7 +53,7 @@
 ;       int imm8            cd ib
 
 [bits 16]                                  ; We tell the assembler, that we want our code assembled in 16 bit mode.
-main:                                      ; A label like "main" represents or points to the address/offset of the next instruction directly below it. Labels must be unique.
+bootsector:                                ; A label like "main" represents or points to the address/offset of the next instruction directly below it. Labels must be unique.
   mov al, 0x99                             ; mov reg8,imm8 => b0 99
   mov ax, 0xffff                           ; mov reg16,imm16 => b8 ff ff
   mov bl, al                               ; mov r/m8,reg8 => 88 c3
@@ -82,6 +82,6 @@ print_char:
   ret                                      ; c3
 
 padding:       
-  times 510-(padding-main) db 0x0          ; To make the BIOS recognize this sector as a boot block we must ensure it has a size of exactly 512 bytes.
+  times 510-(padding-bootsector) db 0x0    ; To make the BIOS recognize this sector as a boot block we must ensure it has a size of exactly 512 bytes.
                                            ; If the programm size is smaller than 510 bytes we have to pad the remaining bytes with zeros.     
   dw 0xaa55                                ; The last 2 bytes must be the magic number 0xaa55 representing endianness.

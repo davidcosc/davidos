@@ -9,7 +9,7 @@
 
 [org 0x7c00]
 [bits 16]
-main:
+bootsector:
   ; Paint a ligh blue clear screen.
   push 0x3000                              ; Pass color and nil char argument.
   call print_whole_screen
@@ -51,6 +51,6 @@ main:
 hello_world_string:
   db 'Hello, world!', 0x00
 
-padding:
-  times 510-(padding-main) db 0x00         ; Ensure our code is and fits a bootsector. We can not load additional sectors yet.
+bootsector_padding:
+  times 510-(bootsector_padding-bootsector) db 0x00
   dw 0xaa55

@@ -5,7 +5,7 @@
 [bits 16]
 SEGMENT_REGISTER_INIT equ 0x7c0            ; Equ just defines a constant value that is going to be replaced by the assembler where used. It kind of functions like a c #define.
 
-main:
+bootsector:
   mov bx, SEGMENT_REGISTER_INIT            ; => bb c0 07 ; We can not set segment registers directly. We store the desired value in another register and then copy it.              
   mov ss, bx                               ; => 8e d3 ; Setting the stack segment register (SS) to 0x7c0 results in our stack segment starting at address 0x7c00.
   mov bp, 0x0000                           ; => bd 00 00 ; We point our base pointer (BP) to the beginning of the code segment. The stack grows downward. We wont override our code.
@@ -29,6 +29,6 @@ print_char:
   popa
   ret
 
-padding:
-  times 510-(padding-main) db 0x0
+bootsector_padding:
+  times 510-(bootsector_padding-bootsector) db 0x0
   dw 0xaa55

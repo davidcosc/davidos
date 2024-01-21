@@ -26,7 +26,7 @@
 ; A good example would be the "short jmp" instruction, which calculates where to jump based on the relative distance to the destination in bytes.
 
 [bits 16]
-main:
+bootsector:
   mov dx, ds                               ; If set by BIOS correctly, 
   call print_hex_rm                        ; this prints 0x0000 to the screen.
   mov dx, data_value
@@ -109,6 +109,6 @@ print_char:
   popa
   ret
 
-padding:
-  times 510-(padding-main) db 0x0
+bootsector_padding:
+  times 510-(bootsector_padding-bootsector) db 0x0
   dw 0xaa55

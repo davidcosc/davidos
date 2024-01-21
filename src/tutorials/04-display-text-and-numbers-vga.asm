@@ -17,7 +17,7 @@
                                            ; During assembly this results in our label values / offests being increased by 0x7c00.
                                            ; This is necessary, since the BIOS sets the data segment register DS to zero.
 [bits 16]
-main:
+bootsector:
   ; Set up stack to grow down from 0x0000:0x7c00.
   mov word bp, 0x0000
   mov ss, bp
@@ -74,6 +74,6 @@ main:
 hello_world_string:
   db 'Hello, world!', 0x00
 
-padding:
-  times 510-(padding-main) db 0x00         ; Ensure our code is and fits a bootsector. We can not load additional sectors yet.
+bootsector_padding:
+  times 510-(bootsector_padding-bootsector) db 0x00
   dw 0xaa55

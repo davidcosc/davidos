@@ -4,7 +4,7 @@
 
 [org 0x7c00]
 [bits 16]
-main:
+bootsector:
   ; Setup screen.
   push 0x3000                              ; Pass color and nil char arg.
   call print_whole_screen
@@ -35,8 +35,8 @@ main:
 %include "../lib/ata-driver.asm"
 %include "../lib/vga-base-driver.asm"
 
-padding:
-  times 510-(padding-main) db 0x00     
+bootsector_padding:
+  times 510-(bootsector_padding-bootsector) db 0x00     
   dw 0xaa55
 
 sector_two:
