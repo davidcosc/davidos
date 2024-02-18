@@ -3,9 +3,36 @@
 This repository aims at showcasing how a computer works under the hood when you have no operating system to do all the heavy lifting for you. Our goal will be to create a minimal operating system. An operating system is system software that manages computer hardware and software resources. It provides common services for computer programs and acts as an interface for the user. Rather than focusing on all the nitty gritty details required for optimization and robustness of an operating system, we will focus on simple implementations in order to provide a basic understanding of some important features. Our operating system will contain basic drivers to interact with hardware such as the display or hard disk drive. It will provide simple memory management as well as multi tasking.
 
 
-## 1 Instruction Operands
+## 1 The boot process
 
-In order to make our computer do anything, we need a way to tell it what we want it to do for us. This is done by supplying our computer with a list of instructions that tell it exactly what to do. In binary form, instructions consist of so called opcodes and their optional arguments. Since these binary instructions are really hard to read for a human, some really nice people built tools called interpreters for us, that allow us to write instructions symbolically in a more readably form using assembly language. Specifically we are going to use NASM assembly in our case.
+As soon as we press the the magical power button on our computer, it starts working. The motherboard sends a signal to the power supply device. The power supply device starts providing electricity. Once the voltages for all powered devices reach their specified level, the power supply sends a power-good signal to the motherboard. The motherboard then starts the CPU. The CPU resets all leftover data in its registers and sets predefined values for each of them. This includes setting up the instruction pointer to start executing its first instruction at address 0xfffffff0. This point is called the reset vector. It is a memory location in read only memory (ROM) that contains a jump instruction to another memory location in ROM, where the basic input output system (BIOS) code starts.
+
+The BIOS first detects and initializes hardware. As a result we can start using random access memory (RAM) and other devices like hard disk drives and display devices. After hardware initialization the BIOS needs to find a bootable device. A part of the BIOS configuration is the boot order. It determins which devices the BIOS attempts to boot from. To boot from a device, the BIOS tries to find a boot sector on that device. A sector is 512 bytes in size. A boot sector is stored in the first 512 bytes or the first sector of a storage device. The last two bytes of the boot sector must be the magic number 0x55aa. This number designates to the BIOS that the device is bootable.
+
+After finding the bootable device, the BIOS loads the boot sector from the storage device into RAM to the specific address 0x7c00. It then jumps to 0x7c00 and thus leaving the BIOS and entering the boot sector. From this point on, we will write and execute our own code leading up to running our own operating system.
+
+Lets take a minute to address some aspects of the BIOS, that are not exactly mandatory for the boot process, but really useful for us nonetheless. The BIOS sets up many convenient helper functions for us, that allow us to print to the screen or read data from disk into memory amongst others. These helper functions hide a lot of complexity from us. This is great, since we are just starting out on our low level programming journey. Once we have gathered enought knowledge, we will start replacing them with our own implementations step by step.
+
+With this said, we can start writing our first, very simple boot sector. All it does is print a letter to the screen. The code can be found in "./tutorials/01-basics.asm". To make the most of it, the code is commented extensively. If you are not familiar with assembly language, you should take a look at [chapter 2](#2-instruction-operands-optional) first. 
+
+Inside the tutorials directory we can assemble our bootsector using the command:
+```
+nasm 01-basics.asm -f bin -o 01-basics.bin
+```
+We run it using:
+```
+qemu-system-x86_64 01-basics.bin
+```
+To view the actual opcodes and arguments generated in hexadecimal form, we can use:
+```
+od -t x1 -A n 01-basics.bin
+```
+Alternatively we can use the provided Makefile configuration to build and run either our operating system or the tutorials.
+
+
+## 2 Instruction Operands (optional)
+
+Our CPU only understands binary instructions. They consist of so called opcodes and their optional arguments. These binary instructions are really hard to read for humans. Therefore tools called interpreters exist, that allow us to write instructions symbolically in a more readably form called assembly language. Different types of assembly language exist. We are going to use NASM assembly.
 
 Instructions using NASM assembly have the following format:
 ```
@@ -23,33 +50,6 @@ load_result_to_reg: mov eax, result
 In this example load_result_to_reg is a label and mov is the mnemonic identifier of an opcode. The destination operand ist eax and the source operand is result. The destination operand is the eax register of the cpu. The source operand value in this case is the address represented by the result label.
 
 Although we are going to use a lot of different instructions throughout this project, we are not going to come close to using all of them. We are simply going to us as many as we need to fullfill our purposes. Explanations on the instructions used will be provided in the code comments of either the tutorials or the actual os.
-
-
-## 2 The boot process
-
-As soon as we press the the magical power button on our computer, it starts working. The motherboard sends a signal to the power supply device. The power supply device starts providing electricity. Once the voltages for all powered devices reach their specified level, the power supply sends a power-good signal to the motherboard. The motherboard then starts the CPU. The CPU resets all leftover data in its registers and sets predefined values for each of them. This includes setting up the instruction pointer to start executing its first instruction at address 0xfffffff0. This point is called the reset vector. It is a memory location in read only memory (ROM) that contains a jump instruction to another memory location in ROM, where the basic input output system (BIOS) code starts.
-
-The BIOS first detects and initializes hardware. As a result we can start using random access memory (RAM) and other devices like hard disk drives and display devices. After hardware initialization the BIOS needs to find a bootable device. A part of the BIOS configuration is the boot order. It determins which devices the BIOS attempts to boot from. To boot from a device, the BIOS tries to find a boot sector on that device. A sector is 512 bytes in size. A boot sector is stored in the first 512 bytes or the first sector of a storage device. The last two bytes of the boot sector must be the magic number 0x55aa. This number designates to the BIOS that the device is bootable.
-
-After finding the bootable device, the BIOS loads the boot sector from the storage device into RAM to the specific address 0x7c00. It then jumps to 0x7c00 and thus leaving the BIOS and entering the boot sector. From this point on, we will write and execute our own code leading up to running our own operating system.
-
-Lets take a minute to address some aspects of the BIOS, that are not exactly mandatory for the boot process, but really useful for us nonetheless. The BIOS sets up many convenient helper functions for us, that allow us to print to the screen or read data from disk into memory amongst others. These helper functions hide a lot of complexity from us. This is great, since we are just starting out on our low level programming journey. Once we have gathered enought knowledge, we will start replacing them with our own implementations step by step.
-
-With this said, we can start writing our first, very simple boot sector. All it does is print a letter to the screen. The code can be found in "./tutorials/01-basics.asm". To make the most of it, the code is commented extensively.
-
-Inside the tutorials directory we can assemble our bootsector using the command:
-```
-nasm 01-basics.asm -f bin -o 01-basics.bin
-```
-We run it using:
-```
-qemu-system-x86_64 01-basics.bin
-```
-To view the actual opcodes and arguments generated in hexadecimal form, we can use:
-```
-od -t x1 -A n 01-basics.bin
-```
-Alternatively we can use the provided Makefile configuration to build and run either our operating system or the tutorials.
 
 
 ## 3 Interacting with the system
