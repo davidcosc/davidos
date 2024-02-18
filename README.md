@@ -52,33 +52,28 @@ In this example load_result_to_reg is a label and mov is the mnemonic identifier
 Although we are going to use a lot of different instructions throughout this project, we are not going to come close to using all of them. We are simply going to us as many as we need to fullfill our purposes. Explanations on the instructions used will be provided in the code comments of either the tutorials or the actual os.
 
 
-## 3 Interacting with the system
+## 3 CPU to device communication - Hardware view (optional)
 
-At the core of any computer system lies the central processing unit (CPU). Its job is to execute instructions of our programs. This includes handling arithmetic, logic and control operations as well as I/O operations to interact with all the other devices in our system.
+In [chapter 1](#1-the-boot-process) we mentioned, that the CPU uses addresses to interact with devices such as reading an instruction from a memory address in ROM. It is worthwhile to understand how this works physically. It might make it easier to understand concepts like address spaces, port and memory mapped I/O later on.
 
-Physically the CPU can talk to other devices in the system, by sending or receiving data in form of "electrical signals". To do so it uses one or more buses. 
+The CPU usually does not interact with devices directly. It instead communicates with so called controllers which in turn manage their respective devices. To access main memory or RAM for example, the CPU interacts with the memory controller. For ROM there exists a ROM controller and for video display devices a display controller respectively. The CPU is connected to these controllers via a bus.
 
-In computer architecture a bus is a communication system that transfers data between components inside a computer, or between computers. For simplicity we can think of a bus as parallel electrical wires/lines with multiple hardware connections.
+For simplicity reasons, we can think of a bus as multiple parallel electrical wires with multiple hardware connectors. For each wire, there is a respective pin on the connector. If a controller sends a signal to the bus, all other connected controllers receive that signal. Usually a signal is intended for a specifc controller. We therefore need a mechanism, that allows us to select the controller that should receive the signal. One way to achieve this is by using subsets of the buses wires for different purposes. Let's imagine we have a bus with 16 wires or lines. We use the first 8 wires for the purpose of selecting or addressing the target controller we want to communicate with. We call these wires the address bus. We use the second 8 wires to send the instruction or data intended for the selected controller. We call these wires the data bus. Next, we assign each controller a specific address. Now imagine the below setup, with the CPU being the only one to send signals to the bus.
 
-![parallel-wire](./images/parallel-wire.png)
+![bus-communication-example](./images/bus-communication-example.drawio.png)
 
-A real example would be the PCI bus.
+To comunicate with the ROM controller the CPU first sends the signal 11111110 to the address bus. The ROM controller now knows, that it should handle the following instructions or data send on the data bus. The memory and display controller in turn know, that they can ignore it.
 
-![pci-bus](./images/pci-bus.png)
+Even though oversimplified, the previous example should give us the basic idea behind bus communication. There are a few things to point out though.
 
-Multiple devices can be connected to the same bus. There must be only one device sending data on the bus at a time. Otherwise data would collide. The current sender is called the master. If the master i.e. the CPU sends out data on the bus, all other devices connected to the bus will receive it. The "bus.pdf" inside the "docs" directory contains details about bus architecture and communication.
+In the example we simply assigned addresses to the controllers. In reality, depending on the type of bus used, there are different ways this is done. For legacy buses and devices such as the ISA bus addresses where standardized. Controllers conforming to the ISA standard had their designated addresses preconfigured inside the controller itself. More modern buses like PCI allow for dynamic software configuration via bus enumeration. Thankfully, we usually do not have to configure a PCI bus ourselves, since the BIOS does so for us.
 
-Not all data is intended for all connected devices. To solve this, each device ist assigned one or more unique addresses. The master first puts the address of the device it would like to interact with onto the bus. This broadcasts the address to all connected devices. The device with the matching address now knows, that it has been selected as the responder. This establishes a connection between master and responder. From now on all other devices know, that data put onto the bus is intended for either the master or the responder and can be ignored.
+Contrary to our example, controllers are usually assinged multiple addresses. For example, depending on the amount of RAM available in our computer, the memory controller may be assigned all available addresse excluding those assigned to other devices.
+A controller that is assigned multiple addresses may use them for different purposes. One address might be used to reference controll registers of the device, whereas another might be used for data registers.
 
-Logically and sometimes physically, a bus is split into three parts, the address, data and control bus. Separate lines might be used for addressing, data transfer and control status information. 
+Another thing to point out is, that in modern CPUs and buses the address and data bus can be multiplexed. This means the same wires are used for sending address and data signals. Address, instructions and data are sent in sequence. A so calles bus protocol defines how to interpret a specific sequence of signals. Devices connected to a bus must know and adhere to the respective bus protocol.
 
-![addr-data-cont-bus](./images/addr-data-cont-bus.png)
-
-An example communication between the CPU and Memory could look like this. First the CPU places the address of the memory cell it would like to interact with on the address bus. To read data from this cell, the CPU would set the read status on the control bus. This signals to memory, that data should be read from the selected cell. Memory would then send the data of the addressed cell back to the CPU using the data bus.
-
-An address may refer to a storage cell of main memory or a register of an I/O device. The range of unique addresses that can be represented on the address bus is called address space.
-
-x86 processors use byte addressing. This means they can access each byte of memory individually. Each byte is represented by its own address.
+Last but not least, some system architectures including x86 use a concept called address spaces. A separate wire called I/O line on a bus is used to switch between address spaces. An address space is the number of unique addresses that can be generated using all address bus wires. Without the additional I/O line this means, we have a single address space and all devices connected to the bus will be assigned address in this space. The I/O line enables us to have two address spaces. They both contain the same addresses. If the I/O line is enabled, we usually refer to the resulting address space as I/O space. If the I/O line is disabled, we refer to the address space as memory space, since this is usually where our main memory or RAM addresses are assigned to the memory controller. This will be important later on, when we talk about [memory mapped and port mapped I/O](#41-port-mapped-and-memory-mapped-io).
 
 
 ### 3.1 Addressing in real mode
