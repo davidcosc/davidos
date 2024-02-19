@@ -54,29 +54,28 @@ Although we are going to use a lot of different instructions throughout this pro
 
 ## 3 CPU to device communication - Hardware view (optional)
 
-In [chapter 1](#1-the-boot-process) we mentioned, that the CPU uses addresses to interact with devices such as reading an instruction from a memory address in ROM. It is worthwhile to understand how this works physically. It might make it easier to understand concepts like address spaces, port and memory mapped I/O later on.
+In [chapter 1](#1-the-boot-process) we mentioned, that the CPU uses addresses to target devices it wants to interact with. It is worthwhile to understand how this works physically. It might make it easier to understand concepts like address spaces, [port and memory mapped I/O](#41-port-mapped-and-memory-mapped-io) later on.
 
-The CPU usually does not interact with devices directly. It instead communicates with so called controllers which in turn manage their respective devices. To access main memory or RAM for example, the CPU interacts with the memory controller. For ROM there exists a ROM controller and for video display devices a display controller respectively. The CPU is connected to these controllers via a bus.
+The CPU usually does not interact with devices directly. It instead communicates with so called controllers. Controllers in turn manage their respective devices. To access main memory or RAM for example, the CPU interacts with the memory controller. For ROM there exists a ROM controller and for video display devices a display controller respectively. The CPU is connected to these controllers via a bus.
 
-For simplicity reasons, we can think of a bus as multiple parallel electrical wires with multiple hardware connectors. For each wire, there is a respective pin on the connector. If a controller sends a signal to the bus, all other connected controllers receive that signal. Usually a signal is intended for a specifc controller. We therefore need a mechanism, that allows us to select the controller that should receive the signal. One way to achieve this is by using subsets of the buses wires for different purposes. Let's imagine we have a bus with 16 wires or lines. We use the first 8 wires for the purpose of selecting or addressing the target controller we want to communicate with. We call these wires the address bus. We use the second 8 wires to send the instruction or data intended for the selected controller. We call these wires the data bus. Next, we assign each controller a specific address. Now imagine the below setup, with the CPU being the only one to send signals to the bus.
+For simplicity reasons, we can think of a bus as multiple parallel electrical wires with multiple hardware connectors. For each wire, there is a respective pin on the connector. If a controller sends a signal to the bus, all other connected controllers receive that signal. Usually a signal is intended for a specifc controller. We therefore need a mechanism, that allows us to select the controller that should receive the signal. One way to achieve this is by using subsets of the buses wires for different purposes. Let's imagine we have a bus with 16 wires or lines. We use the first 8 wires for the purpose of selecting or addressing the target controller we want to communicate with. We call these wires the address bus. We use the second 8 wires to send the instruction or data intended for the selected controller. We call these wires the data bus. Next, we assign each controller a specific address. Now imagine the below setup.
 
 ![bus-communication-example](./images/bus-communication-example.drawio.png)
 
-To comunicate with the ROM controller the CPU first sends the signal 11111110 to the address bus. The ROM controller now knows, that it should handle the following instructions or data send on the data bus. The memory and display controller in turn know, that they can ignore it.
+To comunicate with the ROM controller the CPU first sends the signal 11111110 to the address bus. The ROM controller now knows, that it should handle the following instructions or data sent on the data bus. The memory and display controller in turn know, that they can ignore it.
 
 Even though oversimplified, the previous example should give us the basic idea behind bus communication. There are a few things to point out though.
 
 In the example we simply assigned addresses to the controllers. In reality, depending on the type of bus used, there are different ways this is done. For legacy buses and devices such as the ISA bus addresses where standardized. Controllers conforming to the ISA standard had their designated addresses preconfigured inside the controller itself. More modern buses like PCI allow for dynamic software configuration via bus enumeration. Thankfully, we usually do not have to configure a PCI bus ourselves, since the BIOS does so for us.
 
-Contrary to our example, controllers are usually assinged multiple addresses. For example, depending on the amount of RAM available in our computer, the memory controller may be assigned all available addresse excluding those assigned to other devices.
-A controller that is assigned multiple addresses may use them for different purposes. One address might be used to reference controll registers of the device, whereas another might be used for data registers.
+Contrary to our example, controllers usually are assinged multiple addresses. For example, depending on the amount of RAM available in our computer, the memory controller may be assigned all available addresses, excluding those assigned to other devices. Each memory controller address may refer to a different byte of RAM in that case. A controller that is assigned multiple addresses may also use them for different purposes. One address might be used to reference controll registers of the device, whereas another might be used for data registers.
 
-Another thing to point out is, that in modern CPUs and buses the address and data bus can be multiplexed. This means the same wires are used for sending address and data signals. Address, instructions and data are sent in sequence. A so calles bus protocol defines how to interpret a specific sequence of signals. Devices connected to a bus must know and adhere to the respective bus protocol.
+Another thing to point out is, that in modern CPUs and buses, the address and data bus can be multiplexed. This means the same wires are used for sending address and data signals. Address, instructions and data are sent in sequence. A so called bus protocol defines how to interpret a specific sequence of signals. Devices connected to a bus must know and adhere to the respective bus protocol.
 
-Last but not least, some system architectures including x86 use a concept called address spaces. A separate wire called I/O line on a bus is used to switch between address spaces. An address space is the number of unique addresses that can be generated using all address bus wires. Without the additional I/O line this means, we have a single address space and all devices connected to the bus will be assigned address in this space. The I/O line enables us to have two address spaces. They both contain the same addresses. If the I/O line is enabled, we usually refer to the resulting address space as I/O space. If the I/O line is disabled, we refer to the address space as memory space, since this is usually where our main memory or RAM addresses are assigned to the memory controller. This will be important later on, when we talk about [memory mapped and port mapped I/O](#41-port-mapped-and-memory-mapped-io).
+Last but not least, some system architectures including x86 use a concept called address spaces. A separate wire called I/O line on a bus is used to switch between address spaces. An address space is the number of unique addresses that can be generated using all address bus wires. Without the additional I/O line this means we have a single address space and all devices connected to the bus will be assigned addresses in this space. The I/O line enables us to have two address spaces. They both contain the same addresses. If the I/O line is enabled, we usually refer to the resulting address space as I/O space. If the I/O line is disabled, we refer to the address space as memory space, since this is usually where our main memory or RAM addresses are assigned to the memory controller. In a setup with two address spaces, the same address may refer to different devices or registers depending on which address space the device or register was mapped / assigned to. This will be important later on, when we talk about [memory mapped and port mapped I/O](#41-port-mapped-and-memory-mapped-io).
 
 
-### 3.1 Addressing in real mode
+### 4 Addressing in real mode
 
 Modern 64 bit CPUs are called such because they can handle 64 bit sized instructions. In theory this means, that they are able to address up to 2^64 addresses. With each address referring to a single byte, the resulting address space would be 2^64 bytes or 16 exabyte in size. Due to different technical reasons, the acutal available address space is smaller in reality.
 
@@ -105,7 +104,7 @@ If we attempt to access data in memory using and illegal register, we will run i
 ![valid-dereferencing-registers](./images/valid-dereferencing-registers.png)
 
 
-## 4 Hardware
+## 5 Hardware
 
 There is a lot of different hardware that makes up our computers. Different graphics cards, network cards, hard disk drives, controllers, keyboards, mouses and so on. For each of these devices, a myriad of types and versions from different manufacturers exist. If all of these devices had individual access and configuration mechanisms, building an operating system that could manage all or even most of them would be impossible. Thankfully, over time hardware manufacturers developed access and configuration standards. This way we can build an operating system that can cover a multitude of compatible devices. This does not mean, that an operating system can simply run on all hardware systems. Different hardware systems may still conform to a different set of standards. It is possible though, to support many of them.
 
@@ -147,7 +146,7 @@ Apart of the x86-64 CPU and RAM, qemu emulates the following hardware for us:
 We will focus on the Cirrus CLGD 5446 PCI VGA card for displaying things on the screen, the 8259 PIC for handling interrupts i.e. from our keyboard, the keyboard itself for user input and the ATA controller to read from the disk.
 
 
-### 4.1 Port mapped and memory mapped I/O
+### 5.1 Port mapped and memory mapped I/O
 
 In chapter 3 we mentioned, that addresses may refer to registers of I/O devices. We also briefly covered the importance of the control bus for setting the read/write status.
 
@@ -159,12 +158,12 @@ The main purpose of using the memory address space is to access main memory aka 
 If the I/O requrest status is set, we call the address space referred to "I/O space". We call addresses within this space "I/O ports". Almost all peripheral devices have some of their registers mapped to the I/O address space. In our code we can signal the CPU to use I/O ports by using the special instruction IN and OUT.
 
 
-### 4.2 CPU
+### 5.2 CPU
 
 As is the case for any hardware, a lot of work goes into improving it over time. In order to run, a lot of software requires specific features of specifc CPU versions. If a new version of a CPU would change those features, this kind of software could no longer be run on the new CPU. CPU manufactures go to great lengths, to keep new CPU versions compatible with older ones. This is also the case for x86 CPUs. Every x86 CPU can emulate the oldest version in the CPU family, the Intel 8086. As we already mentioned in section 3.1, for this reason all CPUs start running in 16 bit real mode. This means instructions for our CPU can only work with 16 bits at once. For example, the CPU has an instruction, that allows us to add two 16 bit numbers together during a single CPU cylce. Adding larger numbers would require more cycles.
 
 
-#### 4.2.1 CPU registers
+#### 5.2.1 CPU registers
 
 Depending on the CPU mode, different CPU registers are used for executing instructions. Registers are used as a temporary data storage when we are running a particular routine. For this purpose the x86 has many different registers. An overview of which can be seen below.
 
@@ -173,7 +172,7 @@ Depending on the CPU mode, different CPU registers are used for executing instru
 Throughout this project, we will learn how to use these registers extensively. Note, that not all instructions can be used with all registers. Each register has its own purpose, constraining which instructions it can be used with. We will not go into detail about this. It is just important to keep in mind when debugging our code later on. The descriptions of the above register overview can be used as a guidline. The Intel software developer manual contains detailed documentation for all current x86 CPUs. It can be found in the "docs" directory.
 
 
-#### 4.2.2 CPU and the stack
+#### 5.2.2 CPU and the stack
 
 Although the CPU has many registers, it is still quite limited in the amount of space it provides for storing variables. We often need more storage space than will fit into these registers. We could make use of main memory to accomplish this. However this would require us to provide specific addresses when reading and writing. This is quite inconvenient. We do not really care where temporary data is stored, but we want to retrieve and store it easily.
 
@@ -184,7 +183,7 @@ As we push data onto the stack, the stack expands/grows. We usually set up the s
 Important to note is, that the stack expands/grows downwards from the base pointer. Issuing a PUSH places the value below and not above the address of BP. SP is decremented accordingly. For an example of how to set up the stack, see "./tutorials/03-stack.asm".
 
 
-### 4.3 Cirrus CLGD 5446 PCI VGA card
+### 5.3 Cirrus CLGD 5446 PCI VGA card
 
 Video graphics array (VGA) initially was a video display controller introduced in IBM computers.
 It was characterized by using a new VGA connector, RGBHV signalling and supporting specific resolutions as well as a collection of graphis and text video modes. VGA turned into a standard over time. To date a lot of modern GPUs still implement common VGA modes and interfaces in addition to their proprietary interfaces. Although since 2011 manufacturers starting dropping VGA for GOP or UEFI.Qemu still emulates it though, so we are going to make use of it.
@@ -218,7 +217,7 @@ Writing to a register turns into a two step process. First we write the index of
 The text mode cursor can be manipulated this way. In "./tutorials/05-cursor-vga.asm" we will move the cursor to different places on the screen.
 
 
-### 4.4 ATA Controller
+### 5.4 ATA Controller
 
 We successfully managed to create our first driver. Even though it is a very simple driver, we still wrote quite a bit of assembly code. We are going to write a lot more. Before we can do so however, we have to address a problem we are going to run into soon. Our programs will outgrow the 512 byte boundary of the bootsector. So far the BIOS conveniently loaded this sector into memory for us. It is up to us, to load additional sectors of code and data from the hard disk. We want to continue running lots and lots more code. We will continue by writing an ATA disk driver.
 
@@ -243,26 +242,26 @@ To signal to the drive, that we would like to use LBA for data transfer, we have
 Once we have set up the drive/head register, the cylinder high, cylinder low and sector number register will only be used for storing the remaining LBA bits. The number of sectors we want to read will be stored inside the sector count register. We are now ready to send the read command to the drive and follow the remaining steps of the data in command. An example can be found in "./tutorials/06-read-disk.asm".
 
 
-### 4.5 8259A PIC
+### 5.5 8259A PIC
 
 So far, all communication between the CPU and the VGA card or ATA controller was initialzied by the CPU. This makes a lot of sense for a output devices without any user interaction. We are never going to use the display as an input device. But what if we wanted to change something in our system or program while it is already running. We might want to input some commands using the keyboard for example. In that case we would need a mechanism for detecting that a key was pressed and then act on it. Early computer systems used a mechanism called polling to achieve this. The CPU would periodically test every single input device in sequence and effectively ask each one, if it needs servicing. With every additional device we need to test, this polling cycle becomes more inefficient.
 
 
-#### 4.5.1 Interrupts
+#### 5.5.1 Interrupts
 
 A more desirable method would be one, where the input device would actively notify the CPU, that it needs servicing. The CPU could continue running the main program. It would only stop to do so, once a servicing request from a peripheral device is received. This method is called interrupt.
 
 The signal sent to the CPU by the input device is called an interrupt request (IRQ). It tells the CPU to complete whatever instruction it is currently executing and then switch to a new routine, that will service the requesting device. The new routine is called an interrupt service routine (ISR).
 
 
-#### 4.5.2 Programmable interupt controller (PIC)
+#### 5.5.2 Programmable interupt controller (PIC)
 
 The PIC functions as an overall manager in an interrupt driven system. Input devices can be connected to the PICs interupt lines. The PIC accepts IRQs of the connected devices. It then determines which of the incoming requests is of the highest importance/priority and issues an interrupt to the CPU.
 
 ![interrupts-and-pic](./images/interrupts-and-pic.png)
 
 
-#### 4.5.3 Interrupt vector table (IVT)
+#### 5.5.3 Interrupt vector table (IVT)
 
 After issuing an interrupt to the CPU, the PIC must somehow input information into the CPU that can point the program counter to the ISR associated with the requesting device. This pointer is an address in a vectoring table. In real mode this table is called the interrupt vector table (IVT). An entry in this table is called an interrupt vector. The pointer passed to the CPU by the PIC is the starting address of an interrupt vector. While the actual interrupt signal is sent to the CPU via the interrupt line, the interrupt vector address is sent via the normal data bus. The specifc interrupt vector address the PIC sends to the CPU for each IRQ can be configured on the PIC side.
 
@@ -274,14 +273,14 @@ The names of 8 interrupt vectors starts with IRQ0 to IRQ7. These are the vectors
 
 As we can see apart from the hardware interrupts, there are many other vectors inside the IVT. Some point to routines that should be executed once the CPU runs into a certain error. The first vectors in the IVT are usually reserved for such routines. Others are routines that should be run for so called software interrupts. These are interrupts, that are triggered explicitly from within our programs using the INT instruction. In tutorial 1 we used software interrupt 0x10 to display text on the screen. We will not go into detail about software interrupts for this project though.
 
-#### 4.5.4 8259A specifics
+#### 5.5.4 8259A specifics
 
 All details about the 8259A can be found in the respective documentation inside the "docs" directory. The 8259A PIC has 8 interrupt lines, IR0 till IR7. It can be extended by connecting up to eight slave 8259As to one master 8259A. This results in up to 64 interrupt levels or requests. In our qemu system we have 2 connected/cascaded 8259As for a total of 15 different interrupts. One interrupt line on the first PIC is used for the connection to the second one. The master PIC receives interrupts from the slave PIC on this line. Both PICs are connected to the ISA bus.
 
 The master and slave PICs can be addressed using two I/O ports each. They can be used by the CPU to send so called initialization command words (ICW)s and operation command words (OCWs) to the PICs. The master PIC uses I/O ports 0x20 and 0x21. The slave PIC uses 0xa0 and 0xa1.
 
 
-#### 4.5.5 Programming the 8259A
+#### 5.5.5 Programming the 8259A
 
 To configure the 8259A for use in an x86 system, we have to pass it 4 initialization command words (ICWs) in sequence. While ICW1 is sent to I/O port 0x20/0xa0, ICW2 to ICW4 are sent to I/O port 0x21/0xa1. ICW3 and ICW4 may be optional depending on the selected configuration.
 
@@ -312,14 +311,14 @@ ICW4 sets different PIC modes, i.e. 8086 mode.
 Code for a full example configuration of the 8259A PIC for use with a keyboard ISR can be found in "./tutorials/05-capture-pressed-keys.asm".
 
 
-### 4.6 Keyboard
+### 5.6 Keyboard
 
 In "./tutorials/05-capture-pressed-keys.asm" we configure the PIC to have a single active interrupt line for IRQ1. Usually they keyboard device is connected to IR1 on the master PIC, which is also the case for our qemu setup. Each time a key is pressed, the keyboard triggers IRQ1 on the PIC. The keyboard has registers holding the so called scan codes of the currently pressed keys. They are mapped to standardized I/O port 0x60. Once a keypress generates an interrupt, further keypresses will not generate another one until they keyboard receives an end of intterupt (EOI) signal via I/O port 0x61.
 
 We can write an ISR to read the scan code of the currently pressed key, send an EOI and return the scan code to the main program. We then have to translate the scan code to an ASCII code. To do this we use a map. Based on the keyboard layout we want to use, assign different ASCII values for each scan code. We can see this in action in the second part of tutorial 5.
 
 
-## 5 Memory management
+## 6 Memory management
 
 At this point we have developed all the drivers we are going to use for our operating system. We will use a "./os/bootsector.asm" and "./os/kernel-drivers.asm" file to set them all up from now on. Like we did in all the tutorials so far, all the required code will be read from disk to hard coded memory locations. This is fine, since we are simply setting up base functionality of our operating system.
 
@@ -335,12 +334,12 @@ Finding free space that can be allocated to a requesting application is done usi
 Once a program exits, we can free the programs allocated memory. If neighboring chunks are also free, they are joined or coalesced into a single bigger free chunk. If all chunks are freed, we have returned to our initial memory list state of a single chunk spanning the entire initial memory area. The code can be found in "./tutorials/07-memory-manager.asm".
 
 
-## 6 File menu
+## 7 File menu
 
 We need some kind of menu, that lets us select different programs we want to run. One way of doing this, is to separate each program into a single file. We then have a menu with an overview of all the files present. To select a file we can use the arrow keys to traverse through the menu. We press enter to load the program file to memory and run it. We set up a basic file table in "./tutorials/08-file-menu.asm".
 
 
-## 7 System calls
+## 8 System calls
 
 Currently our programs call provided driver routines via labels. This only works as long as we keep all of our code within a single "root" ASM file, since all labels must be available in our code during assembly. If we wanted to add separately assembled program binaries to our operating system, they would not be able to call driver routines that way. There are different ways around this problem. We could use shared libraries or solve it some other way. For the purpose of this project, we are going to use this chance to introduce a concept calles system calls.
 
