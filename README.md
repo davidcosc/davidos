@@ -11,7 +11,7 @@ The BIOS first detects and initializes hardware. As a result we can start using 
 
 After finding the bootable device, the BIOS loads the boot sector from the storage device into RAM to the specific address 0x7c00. It then jumps to 0x7c00 and thus leaving the BIOS and entering the boot sector. The boot sector usually contains code that loads the bootloader into memory and executes it. The bootloader in turn will then load the kernel into memory and start the operating system. From this point on, the operating system is in control of our computer.
 
-We will start out by writing a simple boot sector program, before we get into writing a bootloader. All it will do is print a letter to the screen. One thing to note is, that at this stage we are in a low level, hardware specific environment. In our case we are runnning on a qemu emulated x86_64 system. This means the instuction set our CPU understands is specific to Intel x86. We also have to deal with other x86 unique features like the CPU mode. After the BIOS jumps to 0x7c00 for example, we are in so called [real mode](#4-addressing-in-real-mode). Even though we could try to find a specifc compiler that would allow us to use C in x86 real mode, boot sectors and bootloaders are commonly written in the respective architectures assembly language. We are going to use NASM assembly.
+We will start out by writing a simple boot sector program, before we get into writing a bootloader. All it will do is print a letter to the screen. One thing to note is, that at this stage we are in a low level, hardware specific environment. In our case we are runnning on a qemu emulated x86_64 system. This means the instuction set our CPU understands is specific to Intel x86. We also have to deal with other x86 unique features like the CPU mode. After the BIOS jumps to 0x7c00 for example, we are in so called [real mode](#3-addressing-and-real-mode). Even though we could try to find a specifc compiler that would allow us to use C in x86 real mode, boot sectors and bootloaders are commonly written in the respective architectures assembly language. We are going to use NASM assembly.
 
 The code to our first boot sector can be found in [tutorial 1](./src/tutorials/01-basics.asm). To make the most of it, the code is commented extensively. For a more general explanation of NASM assembly code structure, it might be worth to have a look at [chapter 2](#2-instruction-operands-optional) first.
 
@@ -54,7 +54,60 @@ In this example load_result_to_reg is a label and mov is the mnemonic identifier
 Although we are going to use a lot of different instructions throughout this project, we are not going to come close to using all of them. We are simply going to us as many as we need to fullfill our purposes. Explanations on the instructions used will be provided in the code comments of either the tutorials or the actual os.
 
 
-## 3 CPU to device communication - Hardware view (optional)
+## 3 Addressing and real mode
+
+In [tutorial 1](./src/tutorials/01-basics.asm) we briefly mentioned how we can use the square brackets operation to kind of dereference the enclosed memory address. 
+```
+mov bl, [.dat]
+```
+In combination with the MOV instruction we can use this to move the value at the address into the desired register instead of the address itself. However, we did not prove this by printing the register value to the screen afterwards. We did not do so on purpose, since it would have printed some arbitrary value to the screen instead of the expected value referenced by the label. The reason for this is the way addressing works in real mode.
+
+What is real mode you might ask. CPUs use something called byte addressing. This means that every address references a single byte in memory or some device register. For now we just think about memory. As a result the amount of addresses available to us determins the amount of memory we can use. The number of available addresses is limited by how the CPU is constructed. Factors may include the register size or the number of physical address pins connected to the bus. Modern x86 CPUs are able to address up to 2^64 addresses. With each address referring to a single byte, we could theoretically access up to 2^64 bytes or 16 exabyte of memory. Who doesn't have this much RAM lying around?
+
+Historically, the first generations of x86 CPUs were far more limited. The 8086 for example had 16 bit registers and 20 pyhsical address lines and thus could only use up to 1 MB of memory.
+
+What makes the entire series of x86 CPUs special is that Intel decided early on, that new CPUs in the series should always be downward compatible to the previous versions. They did this by enabling the CPUs to run in different modes. Even today all x86 CPUs still support running programs written for the first generation of 16 bit CPUs, like the 8086. The mode that makes modern CPUs compatible to the old 16 bit CPUs is called real mode. All x86 CPUs initially start running in this 16 bit real mode.
+
+In theory, using 16 bit addresses would limit us to 2^16 bytes or 64 KB of memory. As mentioned before however, we had 20 address lines available, which should allow us to address up to 2^20 bytes. In order to get around the register size limit of 16 bits, Intel uses a concept called segmentation. Instead of only using a single 16 bit general purpose register to calculate an address, an additional segment register is used. The combination of both registers allows us to address up to 2^20 bytes or 1 MB of memory.
+
+The following notation is used to specify a byte address using segmentation:
+```
+Segment-register:Byte-address-offset
+```
+For example, 0x06EF:0x1234 translates to the address 0x08124.
+The address is calculated by multiplying the segment register value by 16. This is equal to left shifting it by 4. Afterward the byte address offset is added.
+```
+0x06EF * 0x10 + 0x1234 = 0x6EF0 + 0x1234 = 0x08124
+```
+
+x86 CPUs use multiple segment registers for different purposes. The MOV instruction for example uses the data segment register when dereferencing a memory address. The address of the next code instruction is based on the code segment register, however.
+
+![segment-registers](./images/segment-registers.png)
+
+We are finally at the point, where we can understand the problem with the example from tutorial 1. The assembly location counter starts counting from zero increasing with every assembled byte. This results in our ".dat" label being translated to its location counter value, lets say 0x0020. We know, that the BIOS places our code at address 0x7c00. What it also does, is set the DS segment register value to zero. This means the address we want to move our data from, translates to 0x0000:0x0020 or 0x0020. The value we actually wanted to get is at address 0x7c20. To fix this we can either set the DS register to 0x07c0 or manipulate the location counter before assembly. Code for a working example of real mode addressing can be found in [Tutorial 2](./src/tutorials/02-rm-addressing.asm).
+
+On a side note, dereferencing addresses stored in registers using the square operator is limited to certain registers. If we attempt to access data in memory using and illegal register, we will run into an "invalid effective address" error. To prevent this from happening beforehand, here is a list of registers and values that are good to use.
+
+```
+[constant]
+[BX]
+[SI]
+[DI]
+[BX+constant]
+[BP+constant]
+[SI+constant]
+[DI+constant]
+[BX+SI]
+[BX+DI]
+[BP+SI]
+[BP+DI]
+[BX+SI+constant]
+[BX+DI+constant]
+[BP+SI+constant]
+[BP+DI+constant]
+```
+
+## 4 CPU to device communication - Hardware view (optional)
 
 In [chapter 1](#1-the-boot-process) we mentioned, that the CPU uses addresses to target devices it wants to interact with. It is worthwhile to understand how this works physically. It might make it easier to understand concepts like address spaces, [port and memory mapped I/O](#41-port-mapped-and-memory-mapped-io) later on.
 
@@ -75,35 +128,6 @@ Contrary to our example, controllers usually are assinged multiple addresses. Fo
 Another thing to point out is, that in modern CPUs and buses, the address and data bus can be multiplexed. This means the same wires are used for sending address and data signals. Address, instructions and data are sent in sequence. A so called bus protocol defines how to interpret a specific sequence of signals. Devices connected to a bus must know and adhere to the respective bus protocol.
 
 Last but not least, some system architectures including x86 use a concept called address spaces. A separate wire called I/O line on a bus is used to switch between address spaces. An address space is the number of unique addresses that can be generated using all address bus wires. Without the additional I/O line this means we have a single address space and all devices connected to the bus will be assigned addresses in this space. The I/O line enables us to have two address spaces. They both contain the same addresses. If the I/O line is enabled, we usually refer to the resulting address space as I/O space. If the I/O line is disabled, we refer to the address space as memory space, since this is usually where our main memory or RAM addresses are assigned to the memory controller. In a setup with two address spaces, the same address may refer to different devices or registers depending on which address space the device or register was mapped / assigned to. This will be important later on, when we talk about [memory mapped and port mapped I/O](#41-port-mapped-and-memory-mapped-io).
-
-
-### 4 Addressing in real mode
-
-Modern 64 bit CPUs are called such because they can handle 64 bit sized instructions. In theory this means, that they are able to address up to 2^64 addresses. With each address referring to a single byte, the resulting address space would be 2^64 bytes or 16 exabyte in size. Due to different technical reasons, the acutal available address space is smaller in reality.
-
-Historically, the earliest versions of x86 CPUs did not come close to handling 64 bit instructions. The first generations of x86 CPUs were limited to 16 bit instructions. The way these earliest x86 16 bit CPUs worked, was later called real mode. Even today all x86 CPUs still support real mode for backward compatibility. Infact all x86 CPUs initially start running in this 16 bit real mode. It is up to the bootloader to switch to a more modern CPU mode i.e. long mode, which uses 64 bit instructions. For the purpose of our miniature operating system, we will keep using real mode for now though. 
-
-In theory, using 16 bit would limit us to an address space of 64 KB. Intel uses a concept called segmentation to extend the available address space size. Instead of only using a single 16 bit general purpose register to calculate an address, an additional 16 bit segment register is used. The combination of both registers allows us to address up to 2^20 bytes or 1 MB of memory. The reason the avaiblable address space ist limited to 2^20 addresses instead of 2^32 is due to hardware design. 8086 CPUs only had 20 physical address pins, limiting the address bus to 20 lines.
-
-The following notation is used to specify a byte address using segmentation:
-```
-Segment-register:Byte-address-offset
-```
-For example, 0x06EF:0x1234 translates to the address 0x08124.
-The address is calculated by multiplying the segment register value by 16. This is equal to left shifting it by 4. Afterward the byte address offset is added.
-```
-0x06EF * 0x10 + 0x1234 = 0x6EF0 + 0x1234 = 0x08124
-```
-
-x86 CPUs use multiple segment registers for different purposes.
-
-![segment-registers](./images/segment-registers.png)
-
-Based on the type of instruction, a different segment register might be used to store or retrieve data. For example the address of the next code instruction in memory is calculated using the code segment register CS and the instruction byte offset, while label addresses are based on the data segment register DS in combination with the label offset. Instructions manipulating the stack use the stack segment register SS. For an example take a look at "./tutorials/02-rm-addressing.asm".
-
-If we attempt to access data in memory using and illegal register, we will run into an "invalid effective address" error. To prevent this from happening beforehand, here is a list of registers that are good to use.
-
-![valid-dereferencing-registers](./images/valid-dereferencing-registers.png)
 
 
 ## 5 Hardware
