@@ -15,7 +15,7 @@ We will start out by writing a simple boot sector program, before we get into wr
 
 The code to our first boot sector can be found in [tutorial 1](./src/tutorials/01-basics.asm). To make the most of it, the code is commented extensively. For a more general explanation of NASM assembly code structure, it might be worth to have a look at [chapter 2](#2-instruction-operands-optional) first.
 
-One thing to point out about the above example, is the use of software interrupts. The BIOS uses software interrupts to set up many convenient helper functions for us. This enables us to use them, without having to know, where exectly in memory they are located. They allow us to print to the screen or read data from disk into memory amongst others. These helper functions hide a lot of complexity from us. This is great, since we are just starting out on our low level programming journey. Once we have gathered enought knowledge, we will start replacing them with our own implementations one by one. 
+One thing to point out about the above example, is the use of software interrupts. The BIOS uses software interrupts to set up many convenient helper functions for us. This enables us to use them, without having to know, where exactly in memory they are located. They allow us to print to the screen or read data from disk into memory amongst others. These helper functions hide a lot of complexity from us. This is great, since we are just starting out on our low level programming journey. Once we have gathered enought knowledge, we will start replacing them with our own implementations one by one. 
 
 Inside the tutorials directory we can assemble our bootsector using the command:
 ```
