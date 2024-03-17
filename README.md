@@ -39,7 +39,7 @@ Alternatively we can use the provided Makefile configuration to build and run ei
 
 ## 2 Instruction Operands (optional)
 
-Our CPU only understands binary instructions. They consist of so called opcodes and their optional arguments. These binary instructions are really hard to read for humans. Therefore tools called interpreters exist, that allow us to write instructions symbolically in a more readably form called assembly language. Different types of assembly language exist. We are going to use NASM assembly.
+At the bottom most level, a CPU can only work with binary instructions. They consist of so called opcodes and their optional arguments. The specific values and structure of these instructions is specific to the type of CPU used. We could write a program using binary directly. This would be rather time consuming, error prone and the resulting binary code would be hard to read and understand. Tools called assemblers let write instructions in a more human readable fashion. They translate the so called assembly language to the respective binary instructions. Same as with compilers and programming languages, different types of assemblers and assembly language exist. We are going to use NASM.
 
 Instructions using NASM assembly have the following format:
 ```
