@@ -61,7 +61,7 @@ Although we are going to use a lot of different instructions throughout this pro
 
 ## 3 Addressing and real mode
 
-In [tutorial 1](./src/tutorials/01-basics.asm) we briefly mentioned how we can use the square brackets operation to kind of dereference the enclosed memory address. 
+In [tutorial 1](./src/tutorials/01-basics.asm) we briefly mentioned how we can use the square brackets operation to dereference the enclosed memory address.
 ```
 mov bl, [.dat]
 ```
